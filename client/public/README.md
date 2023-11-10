@@ -9,6 +9,20 @@ This help is partially obsolete, rewrite this:
 
 ## Useful code snippets
 
+### Logging to the display (instead of console)
+
+Some globally available functions for logging:
+
+```javascript
+
+  log("something here");
+  logStdout("something here");
+  logStderr("an error");
+
+```
+
+These will be added to the root div (see below)
+
 ### Get the root display div element
 
 ```javascript

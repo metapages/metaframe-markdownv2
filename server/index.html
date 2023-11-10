@@ -12,7 +12,7 @@
         border: 0;
         /* No floating content on sides */
         display: block;
-        background:none transparent;
+        background: none transparent;
         /* background-color: blueviolet; */
       }
       .transparent {
@@ -98,6 +98,33 @@
       }
       iframe {
         width: 100%;
+      }
+
+      /* Base style for <pre> blocks */
+      .pre-stdout {
+        background-color: #f8f8f8; /* light grey background */
+        /* border: 1px solid #ccc; light grey border */
+        border-left: 3px solid #000; /* teal accent on the left */
+        /* padding: 10px; */
+        overflow: auto; /* in case of overflow */
+        font-family: 'Courier New', Courier, monospace; /* monospaced font */
+        white-space: pre-wrap; /* wrap white-space */
+        word-wrap: break-word; /* break long words */
+        margin: 0px;
+      }
+
+      /* Style for stderr to make it stand out */
+      .pre-stderr {
+        background-color: #fff0f0; /* light red background */
+        /* border: 1px solid #ffcccc; light red border */
+        border-left: 3px solid #e53935; /* darker red accent on the left */
+        color: #d32f2f; /* darker red text color */
+        /* padding: 10px; */
+        overflow: auto; /* in case of overflow */
+        font-family: 'Courier New', Courier, monospace; /* monospaced font */
+        white-space: pre-wrap; /* wrap white-space */
+        word-wrap: break-word; /* break long words */
+        margin: 0px;
       }
 
       /* .borderFatSolidGreen {
@@ -317,6 +344,26 @@
 
 
     <script>
+
+      window.logStdout = (s) => {
+        const root = document.getElementById("root");
+        const pre = document.createElement("pre");
+        pre.textContent = s;
+        pre.className = "pre-stdout";
+        root.appendChild(pre);
+        root.scrollTop = root.scrollHeight;
+      };
+      window.log = logStdout;
+
+      window.logStderr = (s) => {
+        const root = document.getElementById("root");
+        const pre = document.createElement("pre");
+        pre.textContent = s;
+        pre.className = "pre-stderr";
+        root.appendChild(pre);
+        root.scrollTop = root.scrollHeight;
+      };
+
       const getQueryParamValueJsonFromWindow = (key) => {
         const url = new URL(window.location.href);
         const valueString = url.searchParams.get(key);
