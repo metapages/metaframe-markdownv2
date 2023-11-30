@@ -107,7 +107,7 @@
         border-left: 3px solid #000; /* teal accent on the left */
         /* padding: 10px; */
         overflow: auto; /* in case of overflow */
-        font-family: 'Courier New', Courier, monospace; /* monospaced font */
+        font-family: "Courier New", Courier, monospace; /* monospaced font */
         white-space: pre-wrap; /* wrap white-space */
         word-wrap: break-word; /* break long words */
         margin: 0px;
@@ -121,7 +121,7 @@
         color: #d32f2f; /* darker red text color */
         /* padding: 10px; */
         overflow: auto; /* in case of overflow */
-        font-family: 'Courier New', Courier, monospace; /* monospaced font */
+        font-family: "Courier New", Courier, monospace; /* monospaced font */
         white-space: pre-wrap; /* wrap white-space */
         word-wrap: break-word; /* break long words */
         margin: 0px;
@@ -146,125 +146,124 @@
 
     <!-- Manually converted ts-js from https://github.com/metapages/hash-query/blob/main/src/lib/util.ts -->
     <script>
-
       const isIframe = () => {
         //http://stackoverflow.com/questions/326069/how-to-identify-if-a-webpage-is-being-loaded-inside-an-iframe-or-directly-into-t
         try {
-          return window !== window.top
+          return window !== window.top;
         } catch (ignored) {
-          return false
+          return false;
         }
-      }
+      };
 
-      const blobToBase64String = blob => {
-        return btoa(encodeURIComponent(JSON.stringify(blob)))
-      }
+      const blobToBase64String = (blob) => {
+        return btoa(encodeURIComponent(JSON.stringify(blob)));
+      };
 
-      const blobFromBase64String = value => {
+      const blobFromBase64String = (value) => {
         if (value && value.length > 0) {
-          const blob = JSON.parse(decodeURIComponent(atob(value)))
-          return blob
+          const blob = JSON.parse(decodeURIComponent(atob(value)));
+          return blob;
         }
-        return undefined
-      }
+        return undefined;
+      };
 
       // Get everything after # then after ?
-      const getUrlHashParams = url => {
-        const urlBlob = new URL(url)
-        return getUrlHashParamsFromHashString(urlBlob.hash)
-      }
+      const getUrlHashParams = (url) => {
+        const urlBlob = new URL(url);
+        return getUrlHashParamsFromHashString(urlBlob.hash);
+      };
 
-      const getUrlHashParamsFromHashString = hash => {
-        let hashString = hash
+      const getUrlHashParamsFromHashString = (hash) => {
+        let hashString = hash;
         while (hashString.startsWith("#")) {
-          hashString = hashString.substring(1)
+          hashString = hashString.substring(1);
         }
 
-        const queryIndex = hashString.indexOf("?")
+        const queryIndex = hashString.indexOf("?");
         if (queryIndex === -1) {
-          return [hashString, {}]
+          return [hashString, {}];
         }
-        const preHashString = hashString.substring(0, queryIndex)
-        hashString = hashString.substring(queryIndex + 1)
-        const hashObject = {}
+        const preHashString = hashString.substring(0, queryIndex);
+        hashString = hashString.substring(queryIndex + 1);
+        const hashObject = {};
         hashString
           .split("&")
-          .filter(s => s.length > 0)
-          .map(s => {
-            const dividerIndex = s.indexOf("=")
+          .filter((s) => s.length > 0)
+          .map((s) => {
+            const dividerIndex = s.indexOf("=");
             if (dividerIndex === -1) {
-              return [s, ""]
+              return [s, ""];
             }
-            const key = s.substring(0, dividerIndex)
-            const value = s.substring(dividerIndex + 1)
-            return [key, value]
+            const key = s.substring(0, dividerIndex);
+            const value = s.substring(dividerIndex + 1);
+            return [key, value];
           })
           .forEach(([key, value]) => {
-            hashObject[key] = value
-          })
+            hashObject[key] = value;
+          });
 
-        Object.keys(hashObject).forEach(key => {
+        Object.keys(hashObject).forEach((key) => {
           try {
-            hashObject[key] = decodeURI(hashObject[key])
+            hashObject[key] = decodeURI(hashObject[key]);
           } catch (ignored) {
-            hashObject[key] = hashObject[key]
+            hashObject[key] = hashObject[key];
           }
-        })
-        return [preHashString, hashObject]
-      }
+        });
+        return [preHashString, hashObject];
+      };
 
       const getHashParamValue = (url, key) => {
-        const [_, hashParams] = getUrlHashParams(url)
-        return hashParams[key]
-      }
+        const [_, hashParams] = getUrlHashParams(url);
+        return hashParams[key];
+      };
 
       const getHashParamValueJson = (url, key) => {
-        const valueString = getHashParamValue(url, key)
+        const valueString = getHashParamValue(url, key);
         if (valueString && valueString !== "") {
-          const value = blobFromBase64String(valueString)
-          return value
+          const value = blobFromBase64String(valueString);
+          return value;
         }
-        return
-      }
+        return;
+      };
 
-      const getHashParamFromWindow = key => {
-        return getHashParamsFromWindow()[1][key]
-      }
+      const getHashParamFromWindow = (key) => {
+        return getHashParamsFromWindow()[1][key];
+      };
 
       const getHashParamsFromWindow = () => {
-        return getUrlHashParams(window.location.href)
-      }
+        return getUrlHashParams(window.location.href);
+      };
 
-      const getHashParamValueDecodedBase64FromWindow = key => {
-        return getHashParamValueDecodedBase64(window.location.href, key)
-      }
+      const getHashParamValueDecodedBase64FromWindow = (key) => {
+        return getHashParamValueDecodedBase64(window.location.href, key);
+      };
 
-      const getHashParamValueJsonFromWindow = key => {
-        return getHashParamValueJson(window.location.href, key)
-      }
+      const getHashParamValueJsonFromWindow = (key) => {
+        return getHashParamValueJson(window.location.href, key);
+      };
 
       const getHashParamValueDecodedBase64 = (url, key) => {
-        const valueString = getHashParamValue(url, key)
+        const valueString = getHashParamValue(url, key);
         if (valueString && valueString !== "") {
-          const value = atob(valueString)
-          return value
+          const value = atob(valueString);
+          return value;
         }
-        return
-      }
+        return;
+      };
 
       const setHashParamInWindow = (key, value, opts) => {
         const hash = window.location.hash.startsWith("#")
           ? window.location.hash.substring(1)
-          : window.location.hash
-        const newHash = setHashValueInHashString(hash, key, value)
+          : window.location.hash;
+        const newHash = setHashValueInHashString(hash, key, value);
         if (newHash === hash) {
-          return
+          return;
         }
 
         if (opts?.modifyHistory) {
           // adds to browser history, so affects back button
           // fires "hashchange" event
-          window.location.hash = newHash
+          window.location.hash = newHash;
         } else {
           // The following will NOT work to trigger a 'hashchange' event:
           // Replace the state so the back button works correctly
@@ -274,76 +273,77 @@
             `${window.location.pathname}${window.location.search}${
               newHash.startsWith("#") ? "" : "#"
             }${newHash}`
-          )
+          );
           // Manually trigger a hashchange event:
           // I don't know how to add the previous and new url parameters
-          window.dispatchEvent(new HashChangeEvent("hashchange"))
+          window.dispatchEvent(new HashChangeEvent("hashchange"));
         }
-      }
+      };
 
       const setHashParamJsonInWindow = (key, value, opts) => {
-        const valueString = value ? blobToBase64String(value) : undefined
-        setHashParamInWindow(key, valueString, opts)
-      }
+        const valueString = value ? blobToBase64String(value) : undefined;
+        setHashParamInWindow(key, valueString, opts);
+      };
 
       // returns hash string
       const setHashValueInHashString = (hash, key, value) => {
-        const [preHashParamString, hashObject] = getUrlHashParamsFromHashString(hash)
+        const [preHashParamString, hashObject] =
+          getUrlHashParamsFromHashString(hash);
 
-        let changed = false
+        let changed = false;
         if (
           (hashObject.hasOwnProperty(key) && value === null) ||
           value === undefined
         ) {
-          delete hashObject[key]
-          changed = true
+          delete hashObject[key];
+          changed = true;
         } else {
           if (hashObject[key] !== value) {
-            hashObject[key] = value
-            changed = true
+            hashObject[key] = value;
+            changed = true;
           }
         }
 
         // don't do work if unneeded
         if (!changed) {
-          return hash
+          return hash;
         }
 
-        const keys = Object.keys(hashObject)
-        keys.sort()
+        const keys = Object.keys(hashObject);
+        keys.sort();
         const hashStringNew = keys
           .map((key, i) => {
-            return `${key}=${encodeURI(hashObject[key])}`
+            return `${key}=${encodeURI(hashObject[key])}`;
           })
-          .join("&")
+          .join("&");
         // replace after the ? but keep before that
-        return `${preHashParamString}?${hashStringNew}`
-      }
+        return `${preHashParamString}?${hashStringNew}`;
+      };
 
       const setHashValueJsonInHashString = (hash, key, value) => {
-        const valueString = value ? blobToBase64String(value) : undefined
-        return setHashValueInHashString(hash, key, valueString)
-      }
+        const valueString = value ? blobToBase64String(value) : undefined;
+        return setHashValueInHashString(hash, key, valueString);
+      };
 
       // returns URL string
       const setHashValueInUrl = (url, key, value) => {
-        const urlBlob = new URL(url)
-        const newHash = setHashValueInHashString(urlBlob.hash, key, value)
-        urlBlob.hash = newHash
-        return urlBlob.href
-      }
+        const urlBlob = new URL(url);
+        const newHash = setHashValueInHashString(urlBlob.hash, key, value);
+        urlBlob.hash = newHash;
+        return urlBlob.href;
+      };
 
       // returns URL string
       const setHashValueJsonInUrl = (url, key, value) => {
-        const urlBlob = new URL(url)
-        urlBlob.hash = setHashValueJsonInHashString(urlBlob.hash, key, value)
-        return urlBlob.href
-      }
+        const urlBlob = new URL(url);
+        urlBlob.hash = setHashValueJsonInHashString(urlBlob.hash, key, value);
+        return urlBlob.href;
+      };
     </script>
 
-
-
     <script>
+      // global object to store loading state
+      window.__metaframejs = { awaiting: [] };
 
       window.logStdout = (s) => {
         const root = document.getElementById("root");
@@ -383,14 +383,17 @@
       };
 
       // Dynamically add <script> and <link> tags to the document.head
-      // TODO: listen to the load events 
+      // and listen to the load events
       const ensureModulesLoaded = () => {
-        
-        
+        window.__metaframejs.awaiting = [];
+        var awaiting = window.__metaframejs.awaiting;
+
         let modules = getHashParamValueJsonFromWindow("modules");
         let resetUrlWithFixedModules = false;
         if (!modules) {
-          let moduleString = new URL(window.location.href).searchParams.get("modules");
+          let moduleString = new URL(window.location.href).searchParams.get(
+            "modules"
+          );
           if (moduleString) {
             modules = JSON.parse(stringFromBase64String(moduleString));
             resetUrlWithFixedModules = true;
@@ -415,11 +418,19 @@
           newUrl.searchParams.delete("modules");
 
           let currentHash = newUrl.hash;
-          currentHash = setHashValueJsonInHashString(currentHash, "modules", modules);
+          currentHash = setHashValueJsonInHashString(
+            currentHash,
+            "modules",
+            modules
+          );
           // TODO This works because we don't currently use config, but this will break stuff later
           v1Config = v1Config || {};
           delete v1Config.modules;
-          currentHash = setHashValueJsonInHashString(currentHash, "c", Object.keys(v1Config).length === 0 ? undefined : v1Config);
+          currentHash = setHashValueJsonInHashString(
+            currentHash,
+            "c",
+            Object.keys(v1Config).length === 0 ? undefined : v1Config
+          );
           newUrl.hash = currentHash;
           newUrl.searchParams.delete("v");
           // drastic, force reload, this could be done better
@@ -445,57 +456,102 @@
                 console.log("error loading module", s);
                 return;
               }
-
             } else {
               let elementTrimmed = s.trim();
               if (elementTrimmed.startsWith("<link")) {
-                const href = /<link\s+.*href="([^"]*)"/.exec(elementTrimmed)?.[1];
+                const href = /<link\s+.*href="([^"]*)"/.exec(
+                  elementTrimmed
+                )?.[1];
                 if (href) {
                   const linkImport = document.createElement("link");
                   linkImport.href = href;
-                  const linkRel = /<link\s+.*rel="([^"]*)"/.exec(elementTrimmed)?.[1];
+                  const linkRel = /<link\s+.*rel="([^"]*)"/.exec(
+                    elementTrimmed
+                  )?.[1];
                   if (linkRel) {
                     linkImport.rel = linkRel;
                   }
-                  const linkType = /<link\s+.*type="([^"]*)"/.exec(elementTrimmed)?.[1];
+                  const linkType = /<link\s+.*type="([^"]*)"/.exec(
+                    elementTrimmed
+                  )?.[1];
                   if (linkType) {
                     linkImport.type = linkType;
                   }
 
-                  const linkCrossorigin = /<link\s+.*crossorigin="([^"]*)"/.exec(elementTrimmed)?.[1];
+                  const linkCrossorigin =
+                    /<link\s+.*crossorigin="([^"]*)"/.exec(elementTrimmed)?.[1];
                   if (linkCrossorigin) {
                     linkImport.crossorigin = linkCrossorigin;
                   }
 
-                  document.getElementsByTagName("head")[0].appendChild(linkImport);
+                  document
+                    .getElementsByTagName("head")[0]
+                    .appendChild(linkImport);
                 }
               } else if (elementTrimmed.startsWith("<script")) {
-                const src = /<script\s+.*src="([^"]*)"/.exec(elementTrimmed)?.[1];
+                const src = /<script\s+.*src="([^"]*)"/.exec(
+                  elementTrimmed
+                )?.[1];
                 if (src) {
-                  const scriptImport = document.createElement("script");
-                  scriptImport.src = src;
-                  const scriptType = /<script\s+.*type="([^"]*)"/.exec(
-                    elementTrimmed
-                  )?.[1];
-                  if (scriptType) {
-                    scriptImport.type = scriptType
-                  }
-                  const scriptCrossorigin = /<script\s+.*crossorigin="([^"]*)"/.exec(elementTrimmed)?.[1];
-                  if (scriptCrossorigin) {
-                    scriptImport.crossorigin = scriptCrossorigin;
-                  }
-                  document.getElementsByTagName("head")[0].appendChild(scriptImport);
+                  awaiting.push(
+                    new Promise((resolve, reject) => {
+                      const scriptImport = document.createElement("script");
+                      scriptImport.src = src;
+                      const scriptType = /<script\s+.*type="([^"]*)"/.exec(
+                        elementTrimmed
+                      )?.[1];
+                      if (scriptType) {
+                        scriptImport.type = scriptType;
+                      }
+                      const scriptCrossorigin =
+                        /<script\s+.*crossorigin="([^"]*)"/.exec(
+                          elementTrimmed
+                        )?.[1];
+                      if (scriptCrossorigin) {
+                        scriptImport.crossorigin = scriptCrossorigin;
+                      }
+                      scriptImport.addEventListener("load", () => {
+                        resolve();
+                      });
+                      scriptImport.addEventListener("error", (err) => {
+                        console.log("Error loading script", src);
+                        reject(err);
+                      });
+
+                      document
+                        .getElementsByTagName("head")[0]
+                        .appendChild(scriptImport);
+                    })
+                  );
                 }
               } else {
                 // Assume it's a script
-                const scriptImport = document.createElement("script");
-                scriptImport.src = s;
-                document.getElementsByTagName("head")[0].appendChild(scriptImport);
+                awaiting.push(
+                  new Promise((resolve, reject) => {
+                    const scriptImport = document.createElement("script");
+                    scriptImport.src = s;
+                    document
+                      .getElementsByTagName("head")[0]
+                      .appendChild(scriptImport);
+
+                    scriptImport.addEventListener("load", () => {
+                      resolve();
+                    });
+                    scriptImport.addEventListener("error", (err) => {
+                      console.log("Error loading script", src);
+                      reject(err);
+                    });
+
+                    document
+                      .getElementsByTagName("head")[0]
+                      .appendChild(scriptImport);
+                  })
+                );
               }
             }
           });
         }
-      }
+      };
 
       ensureModulesLoaded();
 
@@ -522,8 +578,6 @@
         setHashParamInWindow("js", stringToBase64String(js));
       };
 
-      
-
       // TODO: do same as above (modules in hash params) for config
 
       const runJsFromUrl = async () => {
@@ -541,17 +595,19 @@
         document.getElementById("root").textContent = "";
 
         let js = getJsFromUrl();
-        
+
         // BACKWARDS COMPATIBILITY
         // /^(return\s+\(\)\s+=>\s+{)/
 
+        // remove script element regardless, maybe replace
+        if (document.getElementById("custom-exec-js")) {
+          document.getElementById("custom-exec-js").remove();
+        }
+
+        // ensure all modules are loaded 
+        await Promise.all(window.__metaframejs.awaiting);
 
         if (js) {
-          // replace script element
-          if (document.getElementById("custom-exec-js")) {
-            document.getElementById("custom-exec-js").remove();
-          }
-
           var scriptElement = document.createElement("script");
           scriptElement.id = "custom-exec-js";
           scriptElement.type = "module";
@@ -559,7 +615,6 @@
           document.body.appendChild(scriptElement);
         }
       };
-
     </script>
     <script type="module">
       import {
@@ -581,7 +636,7 @@
       // document.addEventListener("DOMContentLoaded", runJsFromUrl);
       window.addEventListener("load", runJsFromUrl);
       // reload on hash changes
-      window.addEventListener("hashchange",runJsFromUrl,false);
+      window.addEventListener("hashchange", runJsFromUrl, false);
     </script>
   </head>
   <body>
@@ -605,8 +660,6 @@
       </div>
     </button>
     <script>
-      
-
       const metapageDef = {
         metaframes: {
           editor: {
@@ -704,7 +757,10 @@
         const [_, hashParams] = getUrlHashParamsFromHashString(
           window.location.hash
         );
-        if (isIframe() && !(hashParams["edit"] === "true" || hashParams["edit"] === "1")) {
+        if (
+          isIframe() &&
+          !(hashParams["edit"] === "true" || hashParams["edit"] === "1")
+        ) {
           document.getElementById("menu-button").style.display = "none";
         }
       }

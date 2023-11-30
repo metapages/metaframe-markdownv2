@@ -3,11 +3,11 @@ version: "2.4"
 services:
 
   server:
-    image: denoland/deno:alpine-1.32.5
-    command: deno run -A --watch=server/ server/server.ts
-    working_dir: /app
+    image: denoland/deno:alpine-1.38.3
+    command: deno run -A --watch ./server.ts
+    working_dir: /app/server
     healthcheck:
-      test: curl --fail http://localhost:3000/healthz || exit 1
+      test: curl --fail http://localhost:3000 || exit 1
       interval: 5s
       timeout: 1s
     environment:
@@ -20,7 +20,7 @@ services:
       - 3000
     volumes:
       - deno:/deno
-      - ./server/server.ts:/app/server/server.ts
+      - ./server:/app/server
       - ./client/src:/app/client/src
     logging:
       driver: ${LOGGING_SERVER:-local}

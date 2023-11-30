@@ -47,7 +47,7 @@
     "vite": "^2.9.9"
   },
   "engines": {
-    "node": "14.x"
+    "node": ">=18.x"
   },
   "browserslist": {
     "production": [
