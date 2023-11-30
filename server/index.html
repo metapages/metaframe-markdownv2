@@ -2,6 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <link rel="icon" type="image/png" href="data:image/png;base64,..." />
     <title>Metaframe JS</title>
     <style>
       html,
@@ -382,12 +383,11 @@
         return undefined;
       };
 
+      let foundImportMap = false;
+
       // Dynamically add <script> and <link> tags to the document.head
       // and listen to the load events
-      const ensureModulesLoaded = () => {
-        window.__metaframejs.awaiting = [];
-        var awaiting = window.__metaframejs.awaiting;
-
+      const ensureModulesLoaded = async () => {
         let modules = getHashParamValueJsonFromWindow("modules");
         let resetUrlWithFixedModules = false;
         if (!modules) {
@@ -437,23 +437,32 @@
           window.history.replaceState(null, document.title, newUrl.href);
         }
 
-        if (modules) {
-          let foundImportMap = false;
-          modules.forEach((s) => {
+        // Load a single script, module, or css, awaiting until done
+        const loadModuleOrCss = async (s) => {
+          return new Promise((resolve, reject) => {
             if (!foundImportMap && s.startsWith("{")) {
               try {
+                if (foundImportMap) {
+                  window.logStderr(
+                    "Found multiple import maps, only the first will be used"
+                  );
+                  return;
+                }
                 const maybeImports = JSON.parse(decodeURIComponent(s));
                 if (maybeImports.imports) {
+                  foundImportMap = true;
                   var importMapElement = document.createElement("script");
                   importMapElement.innerHTML = decodeURIComponent(s);
                   importMapElement.type = "importmap";
                   document
                     .getElementsByTagName("head")[0]
                     .appendChild(importMapElement);
+
                   return;
                 }
               } catch (e) {
                 console.log("error loading module", s);
+                window.logStderr(`error loading module: ${s}`);
                 return;
               }
             } else {
@@ -484,6 +493,17 @@
                     linkImport.crossorigin = linkCrossorigin;
                   }
 
+                  linkImport.addEventListener("load", () => {
+                    resolve();
+                  });
+                  linkImport.addEventListener("error", (err) => {
+                    console.log("Error loading link", elementTrimmed);
+                    window.logStderr(
+                      `error loading script: ${elementTrimmed} error: ${err}`
+                    );
+                    reject(err);
+                  });
+
                   document
                     .getElementsByTagName("head")[0]
                     .appendChild(linkImport);
@@ -493,67 +513,96 @@
                   elementTrimmed
                 )?.[1];
                 if (src) {
-                  awaiting.push(
-                    new Promise((resolve, reject) => {
-                      const scriptImport = document.createElement("script");
-                      scriptImport.src = src;
-                      const scriptType = /<script\s+.*type="([^"]*)"/.exec(
-                        elementTrimmed
-                      )?.[1];
-                      if (scriptType) {
-                        scriptImport.type = scriptType;
-                      }
-                      const scriptCrossorigin =
-                        /<script\s+.*crossorigin="([^"]*)"/.exec(
-                          elementTrimmed
-                        )?.[1];
-                      if (scriptCrossorigin) {
-                        scriptImport.crossorigin = scriptCrossorigin;
-                      }
-                      scriptImport.addEventListener("load", () => {
-                        resolve();
-                      });
-                      scriptImport.addEventListener("error", (err) => {
-                        console.log("Error loading script", src);
-                        reject(err);
-                      });
+                  const scriptImport = document.createElement("script");
+                  scriptImport.async = true;
+                  scriptImport.src = src;
+                  const scriptType = /<script\s+.*type="([^"]*)"/.exec(
+                    elementTrimmed
+                  )?.[1];
+                  if (scriptType) {
+                    scriptImport.type = scriptType;
+                  }
+                  const scriptCrossorigin =
+                    /<script\s+.*crossorigin="([^"]*)"/.exec(
+                      elementTrimmed
+                    )?.[1];
+                  if (scriptCrossorigin) {
+                    scriptImport.crossorigin = scriptCrossorigin;
+                  }
+                  scriptImport.addEventListener("load", () => {
+                    resolve();
+                  });
+                  scriptImport.addEventListener("error", (err) => {
+                    console.log("Error loading script", elementTrimmed);
+                    window.logStderr(
+                      `error loading script: ${elementTrimmed} error: ${err}`
+                    );
+                    reject(err);
+                  });
 
-                      document
-                        .getElementsByTagName("head")[0]
-                        .appendChild(scriptImport);
-                    })
-                  );
+                  document
+                    .getElementsByTagName("head")[0]
+                    .appendChild(scriptImport);
                 }
               } else {
                 // Assume it's a script
-                awaiting.push(
-                  new Promise((resolve, reject) => {
-                    const scriptImport = document.createElement("script");
-                    scriptImport.src = s;
-                    document
-                      .getElementsByTagName("head")[0]
-                      .appendChild(scriptImport);
 
-                    scriptImport.addEventListener("load", () => {
-                      resolve();
-                    });
-                    scriptImport.addEventListener("error", (err) => {
-                      console.log("Error loading script", src);
-                      reject(err);
-                    });
+                const scriptImport = document.createElement("script");
+                scriptImport.src = s;
+                scriptImport.async = true;
+                document
+                  .getElementsByTagName("head")[0]
+                  .appendChild(scriptImport);
 
-                    document
-                      .getElementsByTagName("head")[0]
-                      .appendChild(scriptImport);
-                  })
-                );
+                scriptImport.addEventListener("load", () => {
+                  resolve();
+                });
+                scriptImport.addEventListener("error", (err) => {
+                  console.log("Error loading script", elementTrimmed);
+                  window.logStderr(
+                    `error loading script: ${elementTrimmed} error: ${err}`
+                  );
+                  reject(err);
+                });
+
+                document
+                  .getElementsByTagName("head")[0]
+                  .appendChild(scriptImport);
               }
             }
           });
+
+          // if (s.endsWith(".css")) {
+          //   return new Promise((resolve, reject) => {
+          //       const script = document.createElement('script');
+          //       script.type = 'module';
+          //       script.src = url;
+
+          //       script.onload = () => resolve(`Script loaded: ${url}`);
+          //       script.onerror = () => reject(`Error loading script: ${url}`);
+
+          //       document.head.appendChild(script);
+          //   });
+        };
+
+        if (modules) {
+          for (let scriptOrCss of modules) {
+            try {
+              await loadModuleOrCss(scriptOrCss);
+            } catch (error) {
+              console.error(error);
+            }
+          }
+          // modules.forEach((s) => {
+
+          // });
         }
       };
 
-      ensureModulesLoaded();
+      const modulesLoadingPromise = ensureModulesLoaded();
+
+      window.__metaframejs.awaiting = [modulesLoadingPromise];
+      // var awaiting = window.__metaframejs.awaiting;
 
       const getJsFromUrl = () => {
         const [prefix, hashParams] = getUrlHashParamsFromHashString(
@@ -604,7 +653,7 @@
           document.getElementById("custom-exec-js").remove();
         }
 
-        // ensure all modules are loaded 
+        // ensure all modules are loaded
         await Promise.all(window.__metaframejs.awaiting);
 
         if (js) {
