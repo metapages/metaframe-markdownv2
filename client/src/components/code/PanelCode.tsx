@@ -3,13 +3,9 @@ import {
   useRef,
 } from 'react';
 
+import { ResizingTabPanel } from '/@/components/layout/ResizingTabPanel';
 import { useMetaframeUrl } from '/@/hooks/useMetaframeUrl';
 
-import {
-  Box,
-  HStack,
-  VStack,
-} from '@chakra-ui/react';
 import { useHashParamBase64 } from '@metapages/hash-query';
 import { MetaframeInputMap } from '@metapages/metapage';
 import { MetaframeStandaloneComponent } from '@metapages/metapage-embed-react';
@@ -17,27 +13,34 @@ import { MetaframeStandaloneComponent } from '@metapages/metapage-embed-react';
 export const PanelCode: React.FC = () => {
   const [code, setCode] = useHashParamBase64("js");
   const { url } = useMetaframeUrl();
+  // single media query with no options
+  // const [isLargerEnough] = useMediaQuery('(min-width: 1000px)')
+  // console.log('isLargerEnough', isLargerEnough);
 
+
+  return <ResizingTabPanel>{url ? <LocalEditor code={code} setCode={setCode} /> : null}</ResizingTabPanel>
   // spacing={10}
-  return (
-    <HStack width="100%" justifyContent="flex-start" h="100%" spacing="0px">
-      <VStack width="100%" alignItems="flex-start" bg="white" h="100%">
-        <Box
-          height="100%"
-          width="100%"
-          // borderWidth="1px"
-          // p={2}
-          rounded="md"
-          overflow="scroll"
-          className="transparent borderFatSolidOrange"
-        >
-          {url ? <LocalEditor code={code} setCode={setCode} /> : null}
-        </Box>
-      </VStack>
+  // return (
+  //   <HStack width="100%" justifyContent="flex-start" h="100%" spacing="0px">
+  //     <VStack width="100%" alignItems="flex-start" bg="white" h="100%">
+  //       <Box
+  //         height="100%"
+  //         width="100%"
+  //         // borderWidth="1px"
+  //         // p={2}
+  //         rounded="md"
+  //         overflow="scroll"
+  //         className="transparent borderFatSolidOrange"
+  //       >
+  //         {url ? <LocalEditor code={code} setCode={setCode} /> : null}
+  //       </Box>
+  //     </VStack>
 
-      <VStack width="100%" alignItems="flex-start"></VStack>
-    </HStack>
-  );
+  //     {isLargerEnough ? <VStack width="100%" alignItems="flex-start"></VStack> : null}
+
+      
+  //   </HStack>
+  // );
 };
 
 const LocalEditor: React.FC<{

@@ -1,9 +1,11 @@
 import fs from 'fs';
 import { resolve } from 'path';
 import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 import react from '@vitejs/plugin-react';
 
+const APP_PORT: number = parseInt(process.env.APP_PORT || "443");
 const HOST: string = process.env.HOST || "server1.localhost";
 const PORT: string = process.env.PORT || "4440";
 const CERT_FILE: string | undefined = process.env.CERT_FILE;
@@ -23,10 +25,11 @@ export default defineConfig(({ command, mode }) => ({
   },
 
   // this is really stupid this should not be necessary
-  plugins: [react()],
+  plugins: [react(), tsconfigPaths()],
 
   esbuild: {
     logOverride: { "this-is-undefined-in-esm": "silent" },
+    // jsxInject: `import React from 'react'`,
   },
 
   build: {
@@ -39,6 +42,9 @@ export default defineConfig(({ command, mode }) => ({
     open: INSIDE_CONTAINER ? undefined : "/",
     host: INSIDE_CONTAINER ? "0.0.0.0" : HOST,
     port: parseInt(PORT),
+    hmr: INSIDE_CONTAINER ? {
+      clientPort: APP_PORT,
+    } : undefined,
     https:
       CERT_KEY_FILE &&
       fs.existsSync(CERT_KEY_FILE) &&

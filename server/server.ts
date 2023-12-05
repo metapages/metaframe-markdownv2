@@ -63,6 +63,13 @@ router.get("/metaframe.json", (ctx: Context) => {
 // After creating the router, we can add it to the app.
 
 const app = new Application();
+app.addEventListener("listen", ({ hostname, port, secure }) => {
+  console.log(
+    `🚀 Listening on: ${secure ? "https://" : "http://"}${
+      hostname ?? "localhost"
+    }:${port}`,
+  );
+});
 app.use(oakCors({ origin: "*" }));
 app.use(
   staticFiles("editor", {

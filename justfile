@@ -19,7 +19,7 @@ grey                               := "\\e[90m"
 
 # open
 # Run the server in development mode
-@dev +args="": _mkcert 
+@dev +args="": _mkcert open
   docker-compose up {{args}}
 
 # DEV: generate TLS certs for HTTPS over localhost https://blog.filippo.io/mkcert-valid-https-certificates-for-localhost/

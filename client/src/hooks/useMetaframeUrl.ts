@@ -3,6 +3,8 @@ import {
   useState,
 } from 'react';
 
+import { ConfigOptions } from '/@/shared/config';
+
 import {
   setHashValueInHashString,
   setHashValueJsonInUrl,
@@ -11,8 +13,6 @@ import {
   useHashParamJson,
 } from '@metapages/hash-query';
 import { MetaframeDefinitionV6 } from '@metapages/metapage';
-
-import { ConfigOptions } from '../shared/config';
 
 export const useMetaframeUrl = () => {
   const [url, setUrl] = useState<string>();

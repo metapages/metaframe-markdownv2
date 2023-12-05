@@ -56,7 +56,8 @@ dev server="js.mtfm.io:443": _css-debug-layer-setup _mkcert _ensure_npm_modules
     export PORT={{APP_PORT_BROWSER}}
     export CERT_FILE=../.certs/{{APP_FQDN}}.pem
     export CERT_KEY_FILE=../.certs/{{APP_FQDN}}-key.pem
-    export BASE=
+    export APP_PORT={{APP_PORT}}
+    export BASE=/editor
     VITE_SERVER_ORIGIN=${VITE_SERVER_ORIGIN} {{vite}} --clearScreen false
 
 # Build the browser client

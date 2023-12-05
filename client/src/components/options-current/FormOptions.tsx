@@ -1,4 +1,6 @@
-import { SwitchDisplayConsole } from '/@/components/SwitchDisplayConsole';
+import {
+  SwitchDisplayConsole,
+} from '/@/components/options-current/SwitchDisplayConsole';
 
 import { VStack } from '@chakra-ui/react';
 

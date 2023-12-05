@@ -3,7 +3,9 @@ version: "2.4"
 services:
 
   server:
-    image: denoland/deno:alpine-1.38.3
+    build:
+      context: ./server
+    # image: denoland/deno:alpine-1.38.3
     command: deno run -A --watch ./server.ts
     working_dir: /app/server
     healthcheck:
@@ -26,8 +28,8 @@ services:
       driver: ${LOGGING_SERVER:-local}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.app.tls=true
-      - traefik.http.routers.app.rule=Host("${APP_FQDN:-server1.localhost}")
+      - traefik.http.routers.app-server.tls=true
+      - traefik.http.routers.app-server.rule=Host("${APP_FQDN:-server1.localhost}")
 
   client:
     build:
@@ -36,11 +38,12 @@ services:
     command: just dev
     working_dir: /app/client
     healthcheck:
-      test: curl --fail http://localhost:3000/healthz || exit 1
+      test: curl --fail http://localhost:4440 || exit 1
       interval: 5s
       timeout: 1s
     environment:
       - "APP_PORT_BROWSER=4440"
+      - "APP_PORT=${APP_PORT:-443}"
       - "APP_FQDN=${APP_FQDN:-server1.localhost}"
       - BASE=editor
     expose:
@@ -61,8 +64,8 @@ services:
       driver: ${LOGGING_SERVER:-local}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.app.tls=true
-      - traefik.http.routers.app.rule=Host("${APP_FQDN:-server1.localhost}") && PathPrefix(`/editor`)
+      - traefik.http.routers.app-client.tls=true
+      - traefik.http.routers.app-client.rule=Host("${APP_FQDN:-server1.localhost}") && PathPrefix(`/editor`)
 
   traefik:
     image: "traefik:v2.10.4"

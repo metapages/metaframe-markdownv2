@@ -1,5 +1,6 @@
 import { StrictMode } from 'react';
 
+import { App } from '/@/App';
 import { createRoot } from 'react-dom/client';
 
 import {
@@ -7,8 +8,6 @@ import {
   extendTheme,
 } from '@chakra-ui/react';
 import { WithMetaframe } from '@metapages/metaframe-hook';
-
-import { App } from './App';
 
 const theme = extendTheme({
   styles: {

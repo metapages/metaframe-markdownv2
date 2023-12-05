@@ -69,6 +69,28 @@
       }
 
       .root-with-editor {
+          position: absolute;
+          top: 60px;
+          /* left: 50%; */
+          width: 100%;
+          max-width: 100%;
+          height: calc(100vh - 60px);
+          max-height: calc(100vh - 60px);
+        }
+
+      @media only screen and (min-width: 1000px) {
+        .root-with-editor {
+          position: absolute;
+          top: 60px;
+          left: 50%;
+          width: 50%;
+          max-width: 50%;
+          height: calc(100vh - 60px);
+          max-height: calc(100vh - 60px);
+        }
+      }
+
+      /* .root-with-editor {
         position: absolute;
         top: 60px;
         left: 50%;
@@ -76,7 +98,7 @@
         max-width: 50%;
         height: calc(100vh - 60px);
         max-height: calc(100vh - 60px);
-      }
+      } */
 
       /**
        * Special handling of iframes for ensuring the metaframe is correctly maximized.
@@ -761,7 +783,8 @@
         iframeDivContainer.className = "iframe-container";
         iframeDivContainer.appendChild(iframe);
 
-        document.getElementById("container").prepend(iframeDivContainer);
+        // document.getElementById("container").prepend(iframeDivContainer);
+        document.getElementById("container").append(iframeDivContainer);
         runJsFromUrl();
 
         // editorMetaframe.onOutput("text", (text) => {
