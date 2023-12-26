@@ -400,7 +400,17 @@
 
       const stringFromBase64String = (value) => {
         if (value && value.length > 0) {
-          return decodeURIComponent(atob(value));
+          try {
+            return decodeURIComponent(atob(value));
+          } catch(err) {
+            console.error(err);
+            try {
+              return atob(value);
+            } catch(err) {
+              console.error(err);
+              return undefined;
+            } 
+          }
         }
         return undefined;
       };
@@ -479,7 +489,10 @@
                   document
                     .getElementsByTagName("head")[0]
                     .appendChild(importMapElement);
-
+                  // import maps do not fire onload events, so resolve here
+                  // the timing of this may not be perfect, so note this here
+                  // in case there are issues
+                  resolve();
                   return;
                 }
               } catch (e) {

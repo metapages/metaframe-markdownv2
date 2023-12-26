@@ -68,7 +68,7 @@ services:
       - traefik.http.routers.app-client.rule=Host("${APP_FQDN:-server1.localhost}") && PathPrefix(`/editor`)
 
   traefik:
-    image: "traefik:v2.10.4"
+    image: "traefik:v2.10.7"
     container_name: "traefik-connect-metaframe-js"
     labels:
      - "traefik.enable=true"
