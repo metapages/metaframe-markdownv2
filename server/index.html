@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <link rel="icon" type="image/png" href="data:image/png;base64,..." />
+    <base target="_parent">
     <title>Metaframe JS</title>
     <style>
       html,
@@ -165,7 +165,42 @@
       .borderDashedBlue {
         border: 2px dashed blue;
       } */
+
+      .invisible-until-hover {
+        opacity: 0; /* Make the element fully transparent initially */
+        transition: opacity 0.3s; /* Optional: Smooth transition for the opacity change */
+      }
+
+      .invisible-until-hover:hover {
+        opacity: 1; /* Make the element fully opaque (visible) when hovered */
+      }
     </style>
+
+    <!-- Misc generic and specific functions -->
+    <script>
+
+      const isEditMode = !!(new URL(window.location.href).searchParams.get("edit"));
+
+      window.logStdout = (s) => {
+        const root = document.getElementById("root");
+        const pre = document.createElement("pre");
+        pre.textContent = s;
+        pre.className = "pre-stdout";
+        root.appendChild(pre);
+        root.scrollTop = root.scrollHeight;
+      };
+      window.log = logStdout;
+
+      window.logStderr = (s) => {
+        const root = document.getElementById("root");
+        const pre = document.createElement("pre");
+        pre.textContent = s;
+        pre.className = "pre-stderr";
+        root.appendChild(pre);
+        root.scrollTop = root.scrollHeight;
+      };
+
+    </script>
 
     <!-- Manually converted ts-js from https://github.com/metapages/hash-query/blob/main/src/lib/util.ts -->
     <script>
@@ -365,27 +400,41 @@
     </script>
 
     <script>
+      const refreshUpdateSvgButton = () => {
+        // only show the edit button if we are NOT in an iframe
+        // or explicitly edit=true is in the hash params
+        // this will be turned into a configurable option later, but no time rn
+        const [_, hashParams] = getUrlHashParamsFromHashString(
+          window.location.hash
+        );
+        
+
+        if (isEditMode) {
+          // do NOT change the visibility of the edit buttons
+          return;
+        }
+
+        if (hashParams["hm"] === "disabled") {
+          document.getElementById("menu-button").style.display = "none";
+        } else if (hashParams["hm"] === "invisible") {
+          // default
+          document
+            .getElementById("svgiconinstance")
+            .classList.add("invisible-until-hover");
+        } else if (hashParams["hm"] === "visible") {
+          // visible, so leave alone
+        } else {
+          // default is invisible but clickable for iframe apps, and visible for non-iframe apps
+          if (isIframe()) {
+            document
+              .getElementById("svgiconinstance")
+              .classList.add("invisible-until-hover");
+          }
+        }
+      };
+
       // global object to store loading state
       window.__metaframejs = { awaiting: [] };
-
-      window.logStdout = (s) => {
-        const root = document.getElementById("root");
-        const pre = document.createElement("pre");
-        pre.textContent = s;
-        pre.className = "pre-stdout";
-        root.appendChild(pre);
-        root.scrollTop = root.scrollHeight;
-      };
-      window.log = logStdout;
-
-      window.logStderr = (s) => {
-        const root = document.getElementById("root");
-        const pre = document.createElement("pre");
-        pre.textContent = s;
-        pre.className = "pre-stderr";
-        root.appendChild(pre);
-        root.scrollTop = root.scrollHeight;
-      };
 
       const getQueryParamValueJsonFromWindow = (key) => {
         const url = new URL(window.location.href);
@@ -628,16 +677,12 @@
               console.error(error);
             }
           }
-          // modules.forEach((s) => {
-
-          // });
         }
       };
 
       const modulesLoadingPromise = ensureModulesLoaded();
 
       window.__metaframejs.awaiting = [modulesLoadingPromise];
-      // var awaiting = window.__metaframejs.awaiting;
 
       const getJsFromUrl = () => {
         const [prefix, hashParams] = getUrlHashParamsFromHashString(
@@ -679,9 +724,6 @@
         document.getElementById("root").textContent = "";
 
         let js = getJsFromUrl();
-
-        // BACKWARDS COMPATIBILITY
-        // /^(return\s+\(\)\s+=>\s+{)/
 
         // remove script element regardless, maybe replace
         if (document.getElementById("custom-exec-js")) {
@@ -726,7 +768,18 @@
   <body>
     <button id="menu-button" class="btn-highlight btn-icon menu-button">
       <div id="toggle-icon-container" class="svgicon">
-        <svg height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h24v24h-24z" fill="none"/><path d="m3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15l10.92-10.91-3.75-3.75-10.91 10.91c-.1.1-.15.22-.15.36zm17.71-10.42c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75z"/></svg>
+        <svg
+          id="svgiconinstance"
+          height="24"
+          viewBox="0 0 24 24"
+          width="24"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path d="m0 0h24v24h-24z" fill="none" />
+          <path
+            d="m3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15l10.92-10.91-3.75-3.75-10.91 10.91c-.1.1-.15.22-.15.36zm17.71-10.42c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75z"
+          />
+        </svg>
       </div>
     </button>
     <script>
@@ -750,8 +803,10 @@
           if (previousContainer) {
             previousContainer.parentElement.removeChild(previousContainer);
           }
-          document.getElementById("toggle-icon-container").innerHTML =
-            `<svg height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h24v24h-24z" fill="none"/><path d="m3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15l10.92-10.91-3.75-3.75-10.91 10.91c-.1.1-.15.22-.15.36zm17.71-10.42c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75z"/></svg>`;
+          document.getElementById(
+            "toggle-icon-container"
+          ).innerHTML = `<svg id="svgiconinstance" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h24v24h-24z" fill="none"/><path d="m3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15l10.92-10.91-3.75-3.75-10.91 10.91c-.1.1-.15.22-.15.36zm17.71-10.42c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75z"/></svg>`;
+          refreshUpdateSvgButton();
 
           document.getElementById("root").className =
             "root borderFatSolidGreen";
@@ -763,8 +818,9 @@
           return;
         }
 
-        document.getElementById("toggle-icon-container").innerHTML =
-            `<svg style="fill: green; stroke: green;" height="24" width="24" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="m173.898 439.404-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0l112.095 112.094 240.095-240.094c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"/></svg>`;
+        document.getElementById(
+          "toggle-icon-container"
+        ).innerHTML = `<svg style="fill: green; stroke: green;" height="24" width="24" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="m173.898 439.404-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0l112.095 112.094 240.095-240.094c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"/></svg>`;
 
         // no previous editor detected, add the editor metapage
         // listen to the editor metapage for changes to the editor url hash
@@ -823,25 +879,15 @@
         .getElementById("menu-button")
         .addEventListener("click", onMenuClick);
 
-      // If there is no code, show the editor
-      if (!getJsFromUrl()) {
+      refreshUpdateSvgButton();
+      console.log(`FIGURING OUT TO SHOW EDIT MODE isEditMode=${isEditMode} getJsFromUrl()=${!!getJsFromUrl()}`)
+      if (isEditMode || !getJsFromUrl()) {
+        // if editing, force showing the menu
         window.addEventListener("load", () => {
           onMenuClick();
         });
-      } else {
-        // only show the edit button if we are NOT in an iframe
-        // or explicitly edit=true is in the hash params
-        // this will be turned into a configurable option later, but no time rn
-        const [_, hashParams] = getUrlHashParamsFromHashString(
-          window.location.hash
-        );
-        if (
-          isIframe() &&
-          !(hashParams["edit"] === "true" || hashParams["edit"] === "1")
-        ) {
-          document.getElementById("menu-button").style.display = "none";
-        }
       }
+
     </script>
 
     <div id="container" class="container borderDashedPurple transparent">

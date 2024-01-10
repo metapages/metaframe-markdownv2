@@ -22,6 +22,10 @@ grey                               := "\\e[90m"
 @dev +args="": _mkcert open
   docker-compose up {{args}}
 
+# Shut down the local server
+@down +args="":
+  docker-compose down {{args}}
+
 # DEV: generate TLS certs for HTTPS over localhost https://blog.filippo.io/mkcert-valid-https-certificates-for-localhost/
 @_mkcert:
   if [ ! -f .traefik/certs/local-key.pem ]; then \

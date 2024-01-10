@@ -7,7 +7,7 @@ import {
 } from '/@/components/header/components/ButtonGotoExternalLink';
 import { PanelHelp } from '/@/components/help/PanelHelp';
 import { PanelModules } from '/@/components/modules/PanelModules';
-import { PanelOptions } from '/@/components/options-current/PanelOptions';
+import { PanelOptions } from '/@/components/options/PanelOptions';
 import { HeaderHeight } from '/@/constants';
 import { FiSettings } from 'react-icons/fi';
 
