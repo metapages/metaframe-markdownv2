@@ -880,7 +880,7 @@
         .addEventListener("click", onMenuClick);
 
       refreshUpdateSvgButton();
-      console.log(`FIGURING OUT TO SHOW EDIT MODE isEditMode=${isEditMode} getJsFromUrl()=${!!getJsFromUrl()}`)
+
       if (isEditMode || !getJsFromUrl()) {
         // if editing, force showing the menu
         window.addEventListener("load", () => {
