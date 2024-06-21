@@ -2,10 +2,14 @@
     "deno.enable": true,
     "deno.unstable": true,
     "deno.enablePaths": [
-        "server"
+        "worker"
     ],
     "files.exclude": {
+        "**/deploy": true,
         "**/node_modules": true
+    },
+    "files.watcherExclude": {
+        "**/deploy": true
     }
 
 }

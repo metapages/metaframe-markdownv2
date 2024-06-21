@@ -39,20 +39,19 @@ open:
 publish: _ensure_deployctl
   #!/usr/bin/env bash
   set -euo pipefail
-  # build the client in client/dist
-  just client/build
+  # build the client in editor/dist
+  just editor/build
   rm -rf deploy
   mkdir -p deploy
-  cp -r client/dist deploy/editor
-  cp -r server/server.ts deploy/
-  cp -r server/index.html deploy/
+  cp -r editor/dist deploy/editor
+  cp -r worker/server.ts deploy/
+  cp -r worker/index.html deploy/
   cd deploy
   deployctl deploy --project=metaframe-js --prod server.ts
 
 # Delete all cached and generated files, and docker volumes
 clean:
-    # just ingress/clean
-    just client/clean
+    just editor/clean
     rm -rf .traefik/certs
     rm -rf deploy
     docker-compose down -v
