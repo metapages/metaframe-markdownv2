@@ -181,7 +181,7 @@
 
       const isEditMode = !!(new URL(window.location.href).searchParams.get("edit"));
 
-      window.logStdout = (s) => {
+      globalThis.logStdout = (s) => {
         const root = document.getElementById("root");
         const pre = document.createElement("pre");
         pre.textContent = s;
@@ -189,9 +189,9 @@
         root.appendChild(pre);
         root.scrollTop = root.scrollHeight;
       };
-      window.log = logStdout;
+      globalThis.log = logStdout;
 
-      window.logStderr = (s) => {
+      globalThis.logStderr = (s) => {
         const root = document.getElementById("root");
         const pre = document.createElement("pre");
         pre.textContent = s;
@@ -712,33 +712,133 @@
       const runJsFromUrl = async () => {
         // if there is a scriptUnload function, run it
         // The previous script has the option to put a cleanup function on the window
-        if (window.scriptUnload) {
+        if (globalThis.scriptUnload) {
           try {
-            window.scriptUnload();
+            globalThis.scriptUnload();
           } catch (err) {
-            console.error("Error running window.scriptUnload()", err);
+            console.error("Error running globalThis.scriptUnload()", err);
           }
         }
-        window.scriptUnload = null;
+        // Older user scripts set this themselves. To handle those old metaframes
+        // make sure we clear it out here to detect if the user set it
+        globalThis.scriptUnload = null;
         // clear all children of root (only can be there from user js code)
         document.getElementById("root").textContent = "";
 
         let js = getJsFromUrl();
 
-        // remove script element regardless, maybe replace
-        if (document.getElementById("custom-exec-js")) {
-          document.getElementById("custom-exec-js").remove();
-        }
-
         // ensure all modules are loaded
         await Promise.all(window.__metaframejs.awaiting);
 
         if (js) {
-          var scriptElement = document.createElement("script");
-          scriptElement.id = "custom-exec-js";
-          scriptElement.type = "module";
-          scriptElement.innerHTML = js;
-          document.body.appendChild(scriptElement);
+          try {
+            const root = document.getElementById("root");
+            const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+            // Define defaults for inValue and delay
+
+            const userCodeWithAdditions = `
+              ${js};
+              exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
+              exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
+              exports.onResize = typeof onResize === 'function' ? onResize : undefined ;
+              exports.handleResize = typeof handleResize === 'function' ? handleResize : undefined ;
+              exports.cleanup = typeof cleanup === 'function' ? cleanup : undefined ;
+              exports.dispose = typeof dispose === 'function' ? dispose : undefined ;
+              exports.unload = typeof unload === 'function' ? unload : undefined ;
+            `;
+            const exports = {};
+            const setOutput = (key, value) => {
+              metaframe.setOutput(key, value);
+            }
+            const setOutputs = (outputs) => {
+              metaframe.setOutputs(outputs);
+            }
+            const asyncFn = new AsyncFunction("setOutput", "setOutputs", "root", 'exports', userCodeWithAdditions);
+            await asyncFn(setOutput, setOutputs, root, exports);
+
+            // Move the user scriptUnload from global to local since we create our own 
+            const userCleanup = globalThis.scriptUnload;
+            globalThis.scriptUnload = null;
+
+            
+            const ourHandleResize = (e) => {
+              const width = root.getBoundingClientRect().width;
+	            const height = root.getBoundingClientRect().height;
+              if (exports.onResize) {
+                try {
+                  exports.onResize(width, height);
+                } catch (err) {
+                  console.error("Error running onResize", err);
+                }
+              }
+              if (exports.handleResize) {
+                try {
+                  exports.handleResize(width, height);
+                } catch (err) {
+                  console.error("Error running handleResize", err);
+                }
+              }
+            };
+
+            globalThis.addEventListener("resize", ourHandleResize, false);
+            
+            
+            const resizeObserver = new ResizeObserver((entries) => ourHandleResize);
+            resizeObserver.observe(root);
+
+            const handleInputs = (inputs) => {
+              if (exports.onInputs) {
+                try {
+                  exports.onInputs(inputs);
+                } catch (err) {
+                  console.error("Error running onInputs", err);
+                }
+              }
+            }
+
+            const disposeInputsListener = metaframe.onInputs(handleInputs);
+            handleInputs(metaframe.getInputs());
+
+            const cleanupHandler = () => {
+              try {
+                if (typeof userCleanup === "function") {
+                  userCleanup();
+                }
+              } catch(err) {
+                console.error("Error running user cleanup", err);
+              }
+              resizeObserver.disconnect();
+              disposeInputsListener();
+              globalThis.removeEventListener("resize", ourHandleResize);
+              if (typeof exports.cleanup === "function") {
+                try {
+                  exports.cleanup();
+                } catch (err) {
+                  console.error("Error running cleanup", err);
+                }
+              }
+              if (typeof exports.dispose === "function") {
+                try {
+                  exports.dispose();
+                } catch (err) {
+                  console.error("Error running dispose", err);
+                }
+              }
+              if (typeof exports.unload === "function") {
+                try {
+                  exports.unload();
+                } catch (err) {
+                  console.error("Error running unload", err);
+                }
+              }
+            };
+
+            globalThis.scriptUnload = cleanupHandler;
+
+          } catch (err) {
+            console.error(err);
+
+          }
         }
       };
     </script>
@@ -749,20 +849,20 @@
       } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@0.13.10-alpha1/dist/index.mjs";
 
       // Examine URL, and add modules
-      window.metapage = {
+      globalThis.metapage = {
         Metapage,
         Metaframe,
       };
 
-      if (!window.metaframe) {
-        window.metaframe = new Metaframe();
+      if (!globalThis.metaframe) {
+        globalThis.metaframe = new Metaframe();
       }
-      var metaframe = window.metaframe;
+      var metaframe = globalThis.metaframe;
 
       // document.addEventListener("DOMContentLoaded", runJsFromUrl);
-      window.addEventListener("load", runJsFromUrl);
+      globalThis.addEventListener("load", runJsFromUrl);
       // reload on hash changes
-      window.addEventListener("hashchange", runJsFromUrl, false);
+      globalThis.addEventListener("hashchange", runJsFromUrl, false);
     </script>
   </head>
   <body>
@@ -795,9 +895,9 @@
       const onMenuClick = async () => {
         // if there is an existing editor, remove it, then exit
         if (document.getElementById("iframe-container")) {
-          if (window.metapageEditor) {
-            window.metapageEditor.dispose();
-            window.metapageEditor = null;
+          if (globalThis.metapageEditor) {
+            globalThis.metapageEditor.dispose();
+            globalThis.metapageEditor = null;
           }
           const previousContainer = document.getElementById("iframe-container");
           if (previousContainer) {
@@ -835,8 +935,8 @@
         editorUrl.hash = window.location.hash;
         metapageDef.metaframes.editor.url = editorUrl.href;
 
-        const mp = window.metapage.Metapage.from(metapageDef);
-        window.metapageEditor = mp;
+        const mp = globalThis.metapage.Metapage.from(metapageDef);
+        globalThis.metapageEditor = mp;
         const editorMetaframe = mp.getMetaframe("editor");
         const iframe = await editorMetaframe.iframe;
 
@@ -845,14 +945,8 @@
         iframeDivContainer.className = "iframe-container";
         iframeDivContainer.appendChild(iframe);
 
-        // document.getElementById("container").prepend(iframeDivContainer);
         document.getElementById("container").append(iframeDivContainer);
         runJsFromUrl();
-
-        // editorMetaframe.onOutput("text", (text) => {
-        //   setJsInUrl(text);
-        //   // runJsFromUrl();
-        // });
 
         let pending;
         const updateCode = (hash) => {
@@ -862,10 +956,9 @@
           pending = setTimeout(() => {
             pending = null;
             window.location.hash = hash;
-            // runJsFromUrl();
           }, 400);
         };
-        mp.addListener(window.metapage.Metapage.DEFINITION, (event) => {
+        mp.addListener(globalThis.metapage.Metapage.DEFINITION, (event) => {
           const url = event?.definition?.metaframes?.editor?.url;
           if (url) {
             const urlBlob = new URL(url);
