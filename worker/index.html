@@ -761,7 +761,6 @@ exports.unload = typeof unload === 'function' ? unload : undefined ;
             const userCleanup = globalThis.scriptUnload;
             globalThis.scriptUnload = null;
 
-            
             const ourHandleResize = (e) => {
               const width = root.getBoundingClientRect().width;
 	            const height = root.getBoundingClientRect().height;
@@ -782,7 +781,6 @@ exports.unload = typeof unload === 'function' ? unload : undefined ;
             };
 
             globalThis.addEventListener("resize", ourHandleResize, false);
-            
             
             const resizeObserver = new ResizeObserver((entries) => ourHandleResize);
             resizeObserver.observe(root);
@@ -838,7 +836,6 @@ exports.unload = typeof unload === 'function' ? unload : undefined ;
 
           } catch (err) {
             console.error(err);
-
           }
         }
       };

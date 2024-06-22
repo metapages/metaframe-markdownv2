@@ -1,6 +1,14 @@
 # Javascript embedded in the URL: run and edit 
 
-Run arbitrary user javascript embedded in the URL.
+Run arbitrary user javascript embedded in the URL. Designed for [metapages](https://metapage.io) so you can connect inputs + outputs to other metaframe URLs.
+
+## Javascript high level
+
+ - top-level `await`
+ - just declare a function `onInputs` to listen to inputs
+ - send outputs with `setOutput`/`setOutputs`
+ - just declare a function `onResize` to listen to window/div resizes
+ - add any css / npm modules, they are embedded in the URL
 
 ## Useful code snippets
 
@@ -40,6 +48,11 @@ The root display div is exposed in the script scope: the name is `root` and the 
 console.log(root.id)
 // logs "root"
 // Add any custom dome elements into "root".
+```
+
+You can also just get it with:
+```javascript
+document.getElementById("root")
 ```
 
 ### Window resize
