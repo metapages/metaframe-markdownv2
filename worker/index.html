@@ -736,16 +736,17 @@
             const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
             // Define defaults for inValue and delay
 
-            const userCodeWithAdditions = `
-              ${js};
-              exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
-              exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
-              exports.onResize = typeof onResize === 'function' ? onResize : undefined ;
-              exports.handleResize = typeof handleResize === 'function' ? handleResize : undefined ;
-              exports.cleanup = typeof cleanup === 'function' ? cleanup : undefined ;
-              exports.dispose = typeof dispose === 'function' ? dispose : undefined ;
-              exports.unload = typeof unload === 'function' ? unload : undefined ;
-            `;
+            const userCodeWithAdditions =
+`"use strict";
+${js};
+exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
+exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
+exports.onResize = typeof onResize === 'function' ? onResize : undefined ;
+exports.handleResize = typeof handleResize === 'function' ? handleResize : undefined ;
+exports.cleanup = typeof cleanup === 'function' ? cleanup : undefined ;
+exports.dispose = typeof dispose === 'function' ? dispose : undefined ;
+exports.unload = typeof unload === 'function' ? unload : undefined ;
+`;
             const exports = {};
             const setOutput = (key, value) => {
               metaframe.setOutput(key, value);
