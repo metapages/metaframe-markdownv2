@@ -2,12 +2,12 @@ version: "2.4"
 
 services:
 
-  server:
+  worker:
     build:
-      context: ./server
+      context: ./worker
     # image: denoland/deno:alpine-1.38.3
     command: deno run -A --watch ./server.ts
-    working_dir: /app/server
+    working_dir: /app/worker
     healthcheck:
       test: curl --fail http://localhost:3000 || exit 1
       interval: 5s
@@ -22,8 +22,8 @@ services:
       - 3000
     volumes:
       - deno:/deno
-      - ./server:/app/server
-      - ./client/src:/app/client/src
+      - ./worker:/app/worker
+      - ./editor/src:/app/editor/src
     logging:
       driver: ${LOGGING_SERVER:-local}
     labels:
@@ -31,17 +31,19 @@ services:
       - traefik.http.routers.app-server.tls=true
       - traefik.http.routers.app-server.rule=Host("${APP_FQDN:-server1.localhost}")
 
-  client:
+  editor:
     build:
-      context: ./client
+      context: ./editor
       # dockerfile: Dockerfile
     command: just dev
-    working_dir: /app/client
+    working_dir: /app/editor
     healthcheck:
       test: curl --fail http://localhost:4440 || exit 1
       interval: 5s
       timeout: 1s
     environment:
+      - "DENO_DIR=/deno"
+      - "DENO_INSTALL_ROOT=/deno"
       - "APP_PORT_BROWSER=4440"
       - "APP_PORT=${APP_PORT:-443}"
       - "APP_FQDN=${APP_FQDN:-server1.localhost}"
@@ -49,23 +51,24 @@ services:
     expose:
       - 4440
     volumes:
-      - node_modules:/app/client/node_modules
-      - ./client/dist:/app/client/dist
-      - ./client/public:/app/client/public
-      - ./client/src:/app/client/src
-      - ./client/index.html:/app/client/index.html
-      - ./client/justfile:/app/client/justfile
-      - ./client/package.json:/app/client/package.json
-      - ./client/package-lock.json:/app/client/package-lock.json
-      - ./client/tsconfig.json:/app/client/tsconfig.json
-      - ./client/vite.config.ts:/app/client/vite.config.ts
+      - deno:/deno
+      - node_modules:/app/editor/node_modules
+      - ./editor/dist:/app/editor/dist
+      - ./editor/public:/app/editor/public
+      - ./editor/src:/app/editor/src
+      - ./editor/index.html:/app/editor/index.html
+      - ./editor/justfile:/app/editor/justfile
+      - ./editor/package.json:/app/editor/package.json
+      - ./editor/package-lock.json:/app/editor/package-lock.json
+      - ./editor/tsconfig.json:/app/editor/tsconfig.json
+      - ./editor/vite.config.ts:/app/editor/vite.config.ts
       - ./.git:/app/.git
     logging:
       driver: ${LOGGING_SERVER:-local}
     labels:
       - traefik.enable=true
-      - traefik.http.routers.app-client.tls=true
-      - traefik.http.routers.app-client.rule=Host("${APP_FQDN:-server1.localhost}") && PathPrefix(`/editor`)
+      - traefik.http.routers.app-editor.tls=true
+      - traefik.http.routers.app-editor.rule=Host("${APP_FQDN:-server1.localhost}") && PathPrefix(`/editor`)
 
   traefik:
     image: "traefik:v2.10.7"
@@ -83,59 +86,6 @@ services:
      - ./.traefik/config.yml:/etc/traefik/config.yml:ro
      - ./.traefik/certs:/etc/certs:ro
      - /var/run/docker.sock:/var/run/docker.sock:ro
-
-
-
-
-
-
-
-
-  # server:
-    # build:
-    #   context: server
-    # healthcheck:
-    #   test: curl --fail http://localhost:8000/healthz || exit 1
-    #   interval: 5s
-    #   timeout: 1s
-    # environment:
-    #   - "DENO_DIR=/root/.cache/deno"
-    # command: deno run --watch --allow-net server.ts
-    # volumes:
-    #   - deno:/root/.cache/deno
-    #   - ./server/justfile:/app/server/justfile
-    #   - ./server/server.ts:/app/server/server.ts
-    #   - ./client/src:/app/client/src
-    # logging:
-    #   driver: ${LOGGING_SERVER:-local}
-    # networks:
-    #   - default
-
-  # client:
-  #   build:
-  #     context: client
-  #   environment:
-  #     - "APP_PORT_BROWSER=${APP_PORT_BROWSER:-4440}"
-  #     - "APP_FQDN=${APP_FQDN:-server1.localhost}"
-  #     - "APP_PORT=${APP_PORT:-4430}"
-  #     # - "SERVER_ORIGIN=${APP_FQDN:-server1.localhost}:${APP_PORT:-4430}"
-  #   command: just dev ${APP_FQDN:-server1.localhost}:${APP_PORT:-4430}
-  #   volumes:
-  #     - node_modules:/app/client/node_modules
-  #     - ./ingress/conf.d/certs:/app/.certs
-  #     - ./client/index.html:/app/client/index.html
-  #     - ./client/justfile:/app/client/justfile
-  #     - ./client/package-lock.json:/app/client/package-lock.json
-  #     - ./client/package.json:/app/client/package.json
-  #     - ./client/public:/app/client/public
-  #     - ./client/src:/app/client/src
-  #     - ./client/tsconfig.json:/app/client/tsconfig.json
-  #     - ./client/vite.config.ts:/app/client/vite.config.ts
-  #     - .git:/app/.git
-  #   logging:
-  #     driver: ${LOGGING_CLIENT:-local}
-  #   ports:
-  #     - "${APP_PORT_BROWSER:-4440}:${APP_PORT_BROWSER:-4440}"
 
 volumes:
   deno:

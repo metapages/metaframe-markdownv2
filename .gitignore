@@ -1,12 +1,10 @@
 # macos junk
 .DS_Store
 # local mkcert generated certificates for https
-/.certs
+/.traefik/certs
 # never commit this
 /.env
 # ignored on the main branch, force-added on the gh-pages branch
 docs
-
-.traefik/certs
-
+# Assets ready for publishing are put here
 /deploy
