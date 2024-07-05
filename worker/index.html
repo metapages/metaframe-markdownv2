@@ -754,7 +754,6 @@
               module = await import(url);
             } catch (error) {
               globalThis.logStderr(`Error importing module: ${error.message}`)
-              // console.error('Error importing module:', error);
             } finally {
               // Clean up by revoking the object URL
               URL.revokeObjectURL(url);
