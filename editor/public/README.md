@@ -1,23 +1,30 @@
 # Javascript embedded in the URL: run and edit 
 
-Run arbitrary user javascript embedded in the URL. Designed for [metapages](https://metapage.io) so you can connect inputs + outputs to other metaframe URLs.
+Run arbitrary user javascript modules embedded in the URL. Designed for [metapages](https://metapage.io) so you can connect inputs + outputs to other metaframe URLs.
 
 ## Javascript high level
 
+ - code is an es6 module 
  - top-level `await`
- - just declare a function `onInputs` to listen to inputs
- - send outputs with `setOutput`/`setOutputs`
- - just declare a function `onResize` to listen to window/div resizes
- - add any css / npm modules, they are embedded in the URL
+ - export a function `onInputs` to listen to inputs
+ - send outputs with `setOutput`/`setOutputs` (predefined functions available in your module)
+ - export a function `onResize` to listen to window/div resizes
+ - use es6 module imports, or add any css / npm modules to the page, they are embedded in the URL
 
 ## Useful code snippets
 
 ### Inputs and outputs
 
-Simply declare a function (arrow function also good 👍) called `onInputs`:
+Simply export a function (arrow function also good 👍) called `onInputs`:
 
 ```javascript
-function onInputs(inputs) {
+// regular js function
+export function onInputs(inputs) {
+  // do something here
+  // inputs is a plain object (key and values)
+}
+//  OR arrow function
+export const onInputs = (inputs) => {
   // do something here
   // inputs is a plain object (key and values)
 }
@@ -27,9 +34,7 @@ To send outputs, there are two functions in the scope `setOutput` and `setOutput
 
 ```javascript
 // send a single JSON output
-setOutput("outputname", {
-  someKey:"someValue"
-});
+setOutput("outputname", 42);
 
 // send an output object of keys+values
 setOutputs({
@@ -57,10 +62,15 @@ document.getElementById("root")
 
 ### Window resize
 
-Simply declare a function (arrow function also good 👍) called `onResize`. This will be called when either the window resizes event and/or the local `div` element resizes:
+Simply export a function (arrow function also good 👍) called `onResize`. This will be called when either the window resizes event and/or the local `div` element resizes:
 
 ```javascript
-const onResize = (width, height) => {
+// regular js function
+export function onResize(width, height) {
+  // Your own code here, handling the resize of the root div
+}
+//  OR arrow function
+export const onResize = (width, height) => {
   // Your own code here, handling the resize of the root div
 }
 ```
@@ -74,9 +84,14 @@ This is not an issue when simply running the page once with code, only when deve
 To have your script cleaned up because of new script (when editing), declare a function `cleanup`, this will be called prior to the updated script re-running:
 
 ```javascript
-const cleanup = () => {
+// regular js function
+export function cleanup() {
 	console.log("internal scriptUnload call")
 	// do your cleanup here
+}
+// OR arrow function
+export const cleanup = () => {
+  // do your cleanup here
 }
 ```
 
@@ -98,6 +113,9 @@ Some globally available functions for logging:
 
 These will be added to the root div (see below) so if your own code manipulates the root div, it could be overwritten. This is mostly useful for headless code.
 
+### Misc
+
+ - `"use strict"` is automatically added to the top of the module code.
 
 ## Connect upstream/downstream metaframes
 
