@@ -732,30 +732,37 @@
 
         if (js) {
           try {
+            // set up (maybe re-override globals)
             const root = document.getElementById("root");
-            const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
-            // Define defaults for inValue and delay
-
-            const userCodeWithAdditions =
-`"use strict";
-${js};
-exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
-exports.onInputs = typeof onInputs === 'function' ? onInputs : undefined ;
-exports.onResize = typeof onResize === 'function' ? onResize : undefined ;
-exports.handleResize = typeof handleResize === 'function' ? handleResize : undefined ;
-exports.cleanup = typeof cleanup === 'function' ? cleanup : undefined ;
-exports.dispose = typeof dispose === 'function' ? dispose : undefined ;
-exports.unload = typeof unload === 'function' ? unload : undefined ;
-`;
-            const exports = {};
-            const setOutput = (key, value) => {
+            globalThis.root = root;
+            globalThis.setOutput = (key, value) => {
               metaframe.setOutput(key, value);
             }
-            const setOutputs = (outputs) => {
+            globalThis.setOutputs = (outputs) => {
               metaframe.setOutputs(outputs);
             }
-            const asyncFn = new AsyncFunction("setOutput", "setOutputs", "root", 'exports', userCodeWithAdditions);
-            await asyncFn(setOutput, setOutputs, root, exports);
+
+            js = `"use strict"\n${js}`;
+
+            // Create a Blob with the user code
+            const blob = new Blob([js], { type: 'application/javascript' });
+            // Create an object URL for the Blob
+            const url = URL.createObjectURL(blob);
+            let module = null;
+            try {
+              // Dynamically import the module using the Blob URL
+              module = await import(url);
+            } catch (error) {
+              globalThis.logStderr(`Error importing module: ${error.message}`)
+              // console.error('Error importing module:', error);
+            } finally {
+              // Clean up by revoking the object URL
+              URL.revokeObjectURL(url);
+            }
+
+            if (!module) {
+              return;
+            }
 
             // Move the user scriptUnload from global to local since we create our own 
             const userCleanup = globalThis.scriptUnload;
@@ -764,16 +771,16 @@ exports.unload = typeof unload === 'function' ? unload : undefined ;
             const ourHandleResize = (e) => {
               const width = root.getBoundingClientRect().width;
 	            const height = root.getBoundingClientRect().height;
-              if (exports.onResize) {
+              if (module.onResize) {
                 try {
-                  exports.onResize(width, height);
+                  module.onResize(width, height);
                 } catch (err) {
                   console.error("Error running onResize", err);
                 }
               }
-              if (exports.handleResize) {
+              if (module.handleResize) {
                 try {
-                  exports.handleResize(width, height);
+                  module.handleResize(width, height);
                 } catch (err) {
                   console.error("Error running handleResize", err);
                 }
@@ -786,9 +793,9 @@ exports.unload = typeof unload === 'function' ? unload : undefined ;
             resizeObserver.observe(root);
 
             const handleInputs = (inputs) => {
-              if (exports.onInputs) {
+              if (module.onInputs) {
                 try {
-                  exports.onInputs(inputs);
+                  module.onInputs(inputs);
                 } catch (err) {
                   console.error("Error running onInputs", err);
                 }
@@ -809,23 +816,23 @@ exports.unload = typeof unload === 'function' ? unload : undefined ;
               resizeObserver.disconnect();
               disposeInputsListener();
               globalThis.removeEventListener("resize", ourHandleResize);
-              if (typeof exports.cleanup === "function") {
+              if (typeof module.cleanup === "function") {
                 try {
-                  exports.cleanup();
+                  module.cleanup();
                 } catch (err) {
                   console.error("Error running cleanup", err);
                 }
               }
-              if (typeof exports.dispose === "function") {
+              if (typeof module.dispose === "function") {
                 try {
-                  exports.dispose();
+                  module.dispose();
                 } catch (err) {
                   console.error("Error running dispose", err);
                 }
               }
-              if (typeof exports.unload === "function") {
+              if (typeof module.unload === "function") {
                 try {
-                  exports.unload();
+                  module.unload();
                 } catch (err) {
                   console.error("Error running unload", err);
                 }
