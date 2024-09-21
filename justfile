@@ -20,11 +20,11 @@ grey                               := "\\e[90m"
 # open
 # Run the server in development mode
 @dev +args="": _mkcert open
-  docker-compose up {{args}}
+  docker compose up {{args}}
 
 # Shut down the local server
 @down +args="":
-  docker-compose down {{args}}
+  docker compose down {{args}}
 
 # DEV: generate TLS certs for HTTPS over localhost https://blog.filippo.io/mkcert-valid-https-certificates-for-localhost/
 @_mkcert:
@@ -54,7 +54,7 @@ clean:
     just editor/clean
     rm -rf .traefik/certs
     rm -rf deploy
-    docker-compose down -v
+    docker compose down -v
 
 @_ensure_deployctl:
     if ! command -v deployctl &> /dev/null; then echo '‼️ deployctl is being installed ‼️'; deno install --allow-all --no-check -r -f https://deno.land/x/deploy/deployctl.ts; fi

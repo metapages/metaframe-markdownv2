@@ -397,6 +397,83 @@
         urlBlob.hash = setHashValueJsonInHashString(urlBlob.hash, key, value);
         return urlBlob.href;
       };
+
+      // Ripped from dataref lib. Should be moved to a shared lib
+      const resolveDataRef = async (ref) => {
+        switch (ref.type) {
+          case "base64":
+            return new Blob([decodeBase64(ref.value)], { type: 'application/octet-stream' });
+          case "utf8":
+            return ref.value;
+          case "json":
+            return ref.value
+          case "url":
+            const arrayBufferFromUrl = await urlToUint8Array(ref.value);
+            return new Blob([new Uint8Array(arrayBufferFromUrl)], { type: 'application/octet-stream' });
+          case "key":
+            // hard code this for now
+            const arrayBufferFromKey = await fetchBlobFromHash(
+              ref.value,
+              "https://container.mtfm.io"
+            );
+            return new Blob([new Uint8Array(arrayBufferFromKey)], { type: 'application/octet-stream' });
+          default: // undefined assume DataRefType.Base64
+            throw `Not yet implemented: DataRef.type "${ref.type}" unknown`;
+        }
+      };
+
+      /**
+       * Decodes a base64-encoded string.
+       *
+       * @see {@link https://datatracker.ietf.org/doc/html/rfc4648#section-4}
+       *
+       * @param b64 The base64-encoded string to decode.
+       * @returns The decoded data.
+       *
+       * @example
+       * ```ts
+       * import { decodeBase64 } from "https://deno.land/std@$STD_VERSION/encoding/base64.ts";
+       *
+       * decodeBase64("Zm9vYmFy"); // Uint8Array(6) [ 102, 111, 111, 98, 97, 114 ]
+       * ```
+       */
+      function decodeBase64(b64string) { //: Uint8Array
+        const binString = atob(b64string);
+        const size = binString.length;
+        const bytes = new Uint8Array(size);
+        for (let i = 0; i < size; i++) {
+          bytes[i] = binString.charCodeAt(i);
+        }
+        return bytes;
+      }
+
+      const urlToUint8Array = async (url) => { //: Promise<Uint8Array>
+        const response = await fetch(url, { redirect: "follow" });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        return new Uint8Array(arrayBuffer);
+      };
+
+      const fetchBlobFromHash = async (
+        hash,
+        address
+      ) => { //: Promise<ArrayBuffer>
+        const resp = await fetch(`${address}/download/${hash}`);
+        const json = await resp.json(); //: { url: string; ref: DataRef }
+        const arrayBuffer = await fetchBlobFromUrl(json.url);
+        return arrayBuffer;
+      };
+
+      const DataRefTypesSet = new Set(["base64", "utf8", "json", "url", "key"]);
+      const isDataRef = (ref) => { //: boolean
+        return !!(
+          typeof ref === "object" &&
+          ref?.value &&
+          DataRefTypesSet.has(ref?.type)
+        );
+      };
     </script>
 
     <script>
@@ -791,9 +868,15 @@
             const resizeObserver = new ResizeObserver((entries) => ourHandleResize);
             resizeObserver.observe(root);
 
-            const handleInputs = (inputs) => {
+            const handleInputs = async (inputs) => {
               if (module.onInputs) {
                 try {
+                  const datarefKeys = inputs ? Object.keys(inputs).filter(key => isDataRef(inputs[key])) : null;
+                  if (datarefKeys && datarefKeys.length > 0) {
+                    for (const key of datarefKeys) {
+                      inputs[key] = await resolveDataRef(inputs[key]);
+                    }                  
+                  }
                   module.onInputs(inputs);
                 } catch (err) {
                   console.error("Error running onInputs", err);

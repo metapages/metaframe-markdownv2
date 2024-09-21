@@ -1,1 +1,1 @@
-client/public/README.md
+editor/public/README.md
