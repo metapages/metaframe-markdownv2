@@ -1,54 +1,59 @@
+import React, { useEffect, useState } from 'react';
 import { useMetaframeUrl } from '/@/hooks/useMetaframeUrl';
 
-import { CopyIcon } from '@chakra-ui/icons';
 import {
-  IconButton,
-  MenuItem,
+  Box,
+  Icon,
+  Tooltip,
   useClipboard,
   useToast,
 } from '@chakra-ui/react';
+import { Link } from "@phosphor-icons/react";
+import {
+  setHashValueInHashString,
+} from '@metapages/hash-query';
 
-export const ButtonCopyExternalLink: React.FC<{ menuitem?: boolean }> = ({
-  menuitem,
-}) => {
+export const ButtonCopyExternalLink: React.FC = () => {
   const { url } = useMetaframeUrl();
-  const toast = useToast();
-  const { onCopy } = useClipboard(url);
+  const [urlForCopy, setUrlForCopy] = useState('');
 
-  if (menuitem) {
-    return (
-      <MenuItem
-        onClick={() => {
-          onCopy();
-          toast({
-            title: "Copied URL to clipboard",
-            status: "success",
-            duration: 5000,
-            isClosable: true,
-          });
-        }}
-      >
-        <CopyIcon  />
-        &nbsp;
-        Copy URL to clipboard
-      </MenuItem>
-    );
-  }
+  useEffect(() => {
+    if (!url) return;
+    const isLocal = window.location.hostname.includes('localhost');
+    let newUrl = setHashValueInHashString(url, 'edit', 'false')
+    if (isLocal) {
+      // TODO: swap localhost in for url val, useMetaframeUrl uses env variables to construct the path
+      setUrlForCopy(newUrl);
+    } else {
+      setUrlForCopy(newUrl);
+    }
+  }, [url])
+
+  const toast = useToast();
+  const { onCopy } = useClipboard(urlForCopy);
 
   return (
-    <IconButton
-      aria-label="copy url"
-      variant="ghost"
-      onClick={() => {
-        onCopy();
-        toast({
-          title: "Copied URL to clipboard",
-          status: "success",
-          duration: 5000,
-          isClosable: true,
-        });
-      }}
-      icon={<CopyIcon />}
-    />
+    <Box position="relative" display="inline-block">
+      <Tooltip label={"Copy Link"}>
+        <Icon
+          aria-label="copy url"
+          _hover={{ bg: "gray.300" }}
+          bg={"none"}
+          p={"3px"}
+          borderRadius={5}
+          as={Link}
+          boxSize="7"
+          onClick={() => {
+            onCopy();
+            toast({
+              title: "Copied URL to clipboard",
+              status: "success",
+              duration: 5000,
+              isClosable: true,
+            });
+          }}
+        />
+      </Tooltip>
+    </Box>
   );
 };

@@ -14,7 +14,6 @@
         /* No floating content on sides */
         display: block;
         background: none transparent;
-        /* background-color: blueviolet; */
       }
       .transparent {
         background: none transparent;
@@ -30,75 +29,62 @@
         box-sizing: inherit;
       }
 
-      .menu-button {
+      #menu-button {
         position: absolute;
         top: 10px;
-        left: calc(100vw - 50px);
+        left: calc(100vw - 90px);
         z-index: 1000;
-        background-color: transparent;
+        background-color: #F9F9F9;
         border: 0px;
         padding: 0px;
         margin: 0px;
-        width: 40px;
-        height: 40px;
-        /* background-color: red; */
+        width: 80px;
+        height: 30px;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        border: 1px solid #e0e0e0;
+        border-radius: 3px;
+        color: #818382;
+        font-family: monospace;
+        padding: 8px;
       }
 
-      .container {
+      .editor-container-hidden {
+        position: absolute;
+        display: flex;
+        width: 0vw;
+        height: 0vh;
+      }
+
+      .editor-container-shown {
+        position: absolute;
         display: flex;
         width: 100vw;
         height: 100vh;
-        justify-content: center;
-        align-items: stretch;
-        gap: 0px;
-      }
-
-      .container-with-editor {
-        /* display: flex;
-        flex-direction: row-reverse; */
-        width: 100vw;
-        height: 100vh;
-        /* justify-content: flex-start;
-        align-items: stretch;
-        gap: 0px; */
+        z-index: 3;
+        right: 0px;
+        max-width: 100vw;
+        min-width: 10ch;
       }
 
       .root {
+        position: absolute;
         width: 100%;
         max-width: 100%;
+        height: 100%;
       }
 
       .root-with-editor {
           position: absolute;
-          top: 60px;
-          /* left: 50%; */
-          width: 100%;
-          max-width: 100%;
-          height: calc(100vh - 60px);
-          max-height: calc(100vh - 60px);
+          top: 0px;
+          height: 100vh;
+          max-height: 100vh;
+          z-index: 2;
+          overflow: hidden;
+          max-width: calc(100vw - 10ch);
+          min-width: 0px;
         }
-
-      @media only screen and (min-width: 1000px) {
-        .root-with-editor {
-          position: absolute;
-          top: 60px;
-          left: 50%;
-          width: 50%;
-          max-width: 50%;
-          height: calc(100vh - 60px);
-          max-height: calc(100vh - 60px);
-        }
-      }
-
-      /* .root-with-editor {
-        position: absolute;
-        top: 60px;
-        left: 50%;
-        width: 50%;
-        max-width: 50%;
-        height: calc(100vh - 60px);
-        max-height: calc(100vh - 60px);
-      } */
 
       /**
        * Special handling of iframes for ensuring the metaframe is correctly maximized.
@@ -111,22 +97,20 @@
       }
 
       .iframe-container iframe {
+        border-width: 0;
         overflow: hidden;
-        border: 0;
         min-height: 100vh;
         max-height: 100%;
         left: 0;
         position: absolute;
         top: 0;
-      }
-      iframe {
         width: 100%;
       }
 
       /* Base style for <pre> blocks */
       .pre-stdout {
         background-color: #f8f8f8; /* light grey background */
-        /* border: 1px solid #ccc; light grey border */
+        /* border: 3px solid yellow;  */
         border-left: 3px solid #000; /* teal accent on the left */
         /* padding: 10px; */
         overflow: auto; /* in case of overflow */
@@ -178,9 +162,6 @@
 
     <!-- Misc generic and specific functions -->
     <script>
-
-      const isEditMode = !!(new URL(window.location.href).searchParams.get("edit"));
-
       globalThis.logStdout = (s) => {
         const root = document.getElementById("root");
         const pre = document.createElement("pre");
@@ -284,29 +265,8 @@
         return;
       };
 
-      const getHashParamFromWindow = (key) => {
-        return getHashParamsFromWindow()[1][key];
-      };
-
-      const getHashParamsFromWindow = () => {
-        return getUrlHashParams(window.location.href);
-      };
-
-      const getHashParamValueDecodedBase64FromWindow = (key) => {
-        return getHashParamValueDecodedBase64(window.location.href, key);
-      };
-
       const getHashParamValueJsonFromWindow = (key) => {
         return getHashParamValueJson(window.location.href, key);
-      };
-
-      const getHashParamValueDecodedBase64 = (url, key) => {
-        const valueString = getHashParamValue(url, key);
-        if (valueString && valueString !== "") {
-          const value = atob(valueString);
-          return value;
-        }
-        return;
       };
 
       const setHashParamInWindow = (key, value, opts) => {
@@ -336,11 +296,6 @@
           // I don't know how to add the previous and new url parameters
           window.dispatchEvent(new HashChangeEvent("hashchange"));
         }
-      };
-
-      const setHashParamJsonInWindow = (key, value, opts) => {
-        const valueString = value ? blobToBase64String(value) : undefined;
-        setHashParamInWindow(key, valueString, opts);
       };
 
       // returns hash string
@@ -383,20 +338,7 @@
         return setHashValueInHashString(hash, key, valueString);
       };
 
-      // returns URL string
-      const setHashValueInUrl = (url, key, value) => {
-        const urlBlob = new URL(url);
-        const newHash = setHashValueInHashString(urlBlob.hash, key, value);
-        urlBlob.hash = newHash;
-        return urlBlob.href;
-      };
 
-      // returns URL string
-      const setHashValueJsonInUrl = (url, key, value) => {
-        const urlBlob = new URL(url);
-        urlBlob.hash = setHashValueJsonInHashString(urlBlob.hash, key, value);
-        return urlBlob.href;
-      };
 
       // Ripped from dataref lib. Should be moved to a shared lib
       const resolveDataRef = async (ref) => {
@@ -484,28 +426,24 @@
         const [_, hashParams] = getUrlHashParamsFromHashString(
           window.location.hash
         );
-        
-
-        if (isEditMode) {
+        const inEditMode = hashParams['edit'] === 'true';
+        if (inEditMode) {
           // do NOT change the visibility of the edit buttons
           return;
         }
-
+        const menuButton = document.getElementById("menu-button");
         if (hashParams["hm"] === "disabled") {
-          document.getElementById("menu-button").style.display = "none";
-        } else if (hashParams["hm"] === "invisible") {
-          // default
-          document
-            .getElementById("svgiconinstance")
-            .classList.add("invisible-until-hover");
-        } else if (hashParams["hm"] === "visible") {
-          // visible, so leave alone
+          menuButton.style.display = "none";
         } else {
-          // default is invisible but clickable for iframe apps, and visible for non-iframe apps
-          if (isIframe()) {
-            document
-              .getElementById("svgiconinstance")
-              .classList.add("invisible-until-hover");
+          menuButton.style.display = "flex";
+          if (hashParams["hm"] === "invisible") {
+            menuButton.classList.add("invisible-until-hover");
+          } else if (hashParams["hm"] === "visible") {
+            menuButton.classList.remove("invisible-until-hover");
+          } else {
+            // default is invisible but clickable for iframe apps, and visible for non-iframe apps
+            // NOTE: changing this so that the experience is consistent across contexts 10/21/24 CW
+            menuButton.classList.add("invisible-until-hover");
           }
         }
       };
@@ -622,7 +560,7 @@
                   return;
                 }
               } catch (e) {
-                console.log("error loading module", s);
+                console.log("Error loading module", s);
                 window.logStderr(`error loading module: ${s}`);
                 return;
               }
@@ -807,10 +745,28 @@
         // ensure all modules are loaded
         await Promise.all(window.__metaframejs.awaiting);
 
+        const [_, hashParams] = getUrlHashParamsFromHashString(
+          window.location.hash
+        );
+        const editorWidth = hashParams['editorWidth'] || 80;
+        const inEditMode = hashParams['edit'] === 'true';
+        const defaultBgColor = hashParams['bgColor'];
+        if (!inEditMode) {
+          removeEditor();
+        }
+
+        // set up (maybe re-override globals)
+        const root = document.getElementById("root");
+        root.style.width = inEditMode ? `calc(100% - ${editorWidth}ch)` : '100%';
+        if (defaultBgColor) {
+          root.style.background = defaultBgColor;
+        }
+
+        const editor = document.getElementById("editor-root");
+        editor.style.width = inEditMode ? `${editorWidth}ch` : '0%';
+
         if (js) {
           try {
-            // set up (maybe re-override globals)
-            const root = document.getElementById("root");
             globalThis.root = root;
             globalThis.setOutput = (key, value) => {
               metaframe.setOutput(key, value);
@@ -854,6 +810,7 @@
                   console.error("Error running onResize", err);
                 }
               }
+
               if (module.handleResize) {
                 try {
                   module.handleResize(width, height);
@@ -929,6 +886,7 @@
         }
       };
     </script>
+
     <script type="module">
       import {
         Metapage,
@@ -953,21 +911,9 @@
     </script>
   </head>
   <body>
-    <button id="menu-button" class="btn-highlight btn-icon menu-button">
-      <div id="toggle-icon-container" class="svgicon">
-        <svg
-          id="svgiconinstance"
-          height="24"
-          viewBox="0 0 24 24"
-          width="24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path d="m0 0h24v24h-24z" fill="none" />
-          <path
-            d="m3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15l10.92-10.91-3.75-3.75-10.91 10.91c-.1.1-.15.22-.15.36zm17.71-10.42c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75z"
-          />
-        </svg>
-      </div>
+    <button id="menu-button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="#818382" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"></path></svg>
+      <span>Edit</span>
     </button>
     <script>
       const metapageDef = {
@@ -979,10 +925,8 @@
         version: "0.3",
       };
 
-      const onMenuClick = async () => {
-        // if there is an existing editor, remove it, then exit
-        if (document.getElementById("iframe-container")) {
-          if (globalThis.metapageEditor) {
+      const removeEditor = () => {
+        if (globalThis.metapageEditor) {
             globalThis.metapageEditor.dispose();
             globalThis.metapageEditor = null;
           }
@@ -990,32 +934,34 @@
           if (previousContainer) {
             previousContainer.parentElement.removeChild(previousContainer);
           }
-          document.getElementById(
-            "toggle-icon-container"
-          ).innerHTML = `<svg id="svgiconinstance" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="m0 0h24v24h-24z" fill="none"/><path d="m3 17.46v3.04c0 .28.22.5.5.5h3.04c.13 0 .26-.05.35-.15l10.92-10.91-3.75-3.75-10.91 10.91c-.1.1-.15.22-.15.36zm17.71-10.42c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75z"/></svg>`;
           refreshUpdateSvgButton();
 
+          setHashParamInWindow("edit", false);
           document.getElementById("root").className =
             "root borderFatSolidGreen";
-          document.getElementById("container").className =
-            "container borderDashedBlue";
-          // console.log("found, removing/toggling OFF");
-          runJsFromUrl();
+          document.getElementById("editor-root").className =
+            "editor-container-hidden borderDashedBlue";
+      };
 
+      const onMenuClick = async () => {
+        // if there is an existing editor, remove it, then exit
+        if (document.getElementById("iframe-container")) {
+          removeEditor();
+          runJsFromUrl();
           return;
         }
-
-        document.getElementById(
-          "toggle-icon-container"
-        ).innerHTML = `<svg style="fill: green; stroke: green;" height="24" width="24" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><path d="m173.898 439.404-166.4-166.4c-9.997-9.997-9.997-26.206 0-36.204l36.203-36.204c9.997-9.998 26.207-9.998 36.204 0l112.095 112.094 240.095-240.094c9.997-9.997 26.207-9.997 36.204 0l36.203 36.204c9.997 9.997 9.997 26.206 0 36.204l-294.4 294.401c-9.998 9.997-26.207 9.997-36.204-.001z"/></svg>`;
+        setHashParamInWindow("edit", true);
+        
+        document.getElementById("menu-button").style.display = "none";
 
         // no previous editor detected, add the editor metapage
         // listen to the editor metapage for changes to the editor url hash
         // and make that our own url hash
         document.getElementById("root").className =
           "root-with-editor borderFatSolidGreen";
-        document.getElementById("container").className =
-          "container-with-editor borderDashedBlue";
+
+        document.getElementById("editor-root").className =
+          "editor-container-shown borderDashedBlue";
 
         // Modify the metapage editor url hash to our own
         const editorUrl = new URL(metapageDef.metaframes.editor.url);
@@ -1032,7 +978,7 @@
         iframeDivContainer.className = "iframe-container";
         iframeDivContainer.appendChild(iframe);
 
-        document.getElementById("container").append(iframeDivContainer);
+        document.getElementById("editor-root").append(iframeDivContainer);
         runJsFromUrl();
 
         let pending;
@@ -1049,8 +995,7 @@
           const url = event?.definition?.metaframes?.editor?.url;
           if (url) {
             const urlBlob = new URL(url);
-            const newHash = urlBlob.hash;
-            updateCode(newHash);
+            updateCode(urlBlob);
           }
         });
       };
@@ -1061,7 +1006,11 @@
 
       refreshUpdateSvgButton();
 
-      if (isEditMode || !getJsFromUrl()) {
+      const [_, hashParams] = getUrlHashParamsFromHashString(
+          window.location.hash
+        );
+      const inEditMode = hashParams['edit'] === 'true';
+      if (inEditMode || !getJsFromUrl()) {
         // if editing, force showing the menu
         window.addEventListener("load", () => {
           onMenuClick();
@@ -1069,9 +1018,7 @@
       }
 
     </script>
-
-    <div id="container" class="container borderDashedPurple transparent">
-      <div id="root" class="root borderFatSolidGreen transparent"></div>
-    </div>
+    <div id="root" class="root borderFatSolidGreen transparent"></div>
+    <div id="editor-root" class="editor-container-hidden borderDashedPurple transparent"></div>
   </body>
 </html>
