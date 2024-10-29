@@ -62,4 +62,4 @@ clean:
     docker compose down -v
 
 @_ensure_deployctl:
-    if ! command -v deployctl &> /dev/null; then echo '‼️ deployctl is being installed ‼️'; deno install --allow-all --no-check -r -f https://deno.land/x/deploy/deployctl.ts; fi
+    if ! command -v deployctl &> /dev/null; then echo '‼️ deployctl is being installed ‼️'; deno install -gArf jsr:@deno/deployctl; fi
