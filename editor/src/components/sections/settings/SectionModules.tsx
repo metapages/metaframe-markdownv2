@@ -13,12 +13,14 @@ import { AddInputButtonAndModal } from './AddInputButtonAndModal';
 import { InputRow } from './InputRow';
 
 export const SectionModules: React.FC = () => {
-  const [modules, setModules] = useHashParamJson<string[]>("modules");
+  const [modules, setModules] = useHashParamJson<string[] | undefined>("modules");
 
   const addNewInput = useCallback(
     (name: string) => {
-      modules.push(name);
-      setModules(modules);
+      let mods = modules;
+      if (modules) mods.push(name);
+      else mods = [name];
+      setModules(mods);
     },
     [modules, setModules]
   );
