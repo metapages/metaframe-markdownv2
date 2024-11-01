@@ -20,11 +20,11 @@ import {
 import { Plus } from "@phosphor-icons/react";
 
 const validationSchema = yup.object({
-  fileName: yup.string(),
+  modulePath: yup.string(),
 });
 interface FormType extends yup.InferType<typeof validationSchema> {}
 
-export const AddInputButtonAndModal: React.FC<{
+export const AddModuleButtonAndModal: React.FC<{
   add: (input: string) => void;
   text?: string;
 }> = ({ add, text }) => {
@@ -32,8 +32,8 @@ export const AddInputButtonAndModal: React.FC<{
 
   const onSubmit = useCallback(
     (values: FormType) => {
-      if (values.fileName) {
-        add(values.fileName);
+      if (values.modulePath) {
+        add(values.modulePath);
       }
       onClose();
     },
@@ -42,7 +42,7 @@ export const AddInputButtonAndModal: React.FC<{
 
   const formik = useFormik({
     initialValues: {
-      fileName: "",
+      modulePath: "",
     },
     onSubmit,
     validationSchema,
@@ -68,11 +68,11 @@ export const AddInputButtonAndModal: React.FC<{
           <form onSubmit={formik.handleSubmit}>
             <ModalBody>
               <Input
-                id="fileName"
-                name="fileName"
+                id="modulePath"
+                name="modulePath"
                 type="text"
                 onChange={formik.handleChange}
-                value={formik.values.fileName}
+                value={formik.values.modulePath}
               />
             </ModalBody>
             <ModalFooter>
