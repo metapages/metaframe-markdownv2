@@ -9,16 +9,15 @@ import {
   VStack,
 } from '@chakra-ui/react';
 import { useHashParamJson } from '@metapages/hash-query';
-import { AddInputButtonAndModal } from './AddInputButtonAndModal';
-import { InputRow } from './InputRow';
+import { AddModuleButtonAndModal } from './AddModuleButtonAndModal';
+import { ModuleRow } from './ModuleRow';
 
 export const SectionModules: React.FC = () => {
-  const [modules, setModules] = useHashParamJson<string[]>("modules");
+  const [modules, setModules] = useHashParamJson<string[] | undefined>("modules");
 
   const addNewInput = useCallback(
     (name: string) => {
-      modules.push(name);
-      setModules(modules);
+      setModules(modules ? [...modules, name] : [name]);
     },
     [modules, setModules]
   );
@@ -38,13 +37,13 @@ export const SectionModules: React.FC = () => {
           <Text fontWeight={600}>Modules</Text>
           <Text>JS and CSS URLs — Added to index.html</Text>
         </VStack>
-        <AddInputButtonAndModal add={addNewInput} />
+        <AddModuleButtonAndModal add={addNewInput} />
       </HStack>
       <VStack gap={4}>
         <Table px={5} variant="simple">
           <Tbody>
             {(modules || []).map((module, i) => (
-              <InputRow
+              <ModuleRow
                 key={module}
                 name={module}
                 content={module}
@@ -54,7 +53,7 @@ export const SectionModules: React.FC = () => {
           </Tbody>
         </Table>
         <Center>
-          <AddInputButtonAndModal add={addNewInput} text={'Add Module'} />
+          <AddModuleButtonAndModal add={addNewInput} text={'Add Module'} />
         </Center>
       </VStack>
     </VStack>

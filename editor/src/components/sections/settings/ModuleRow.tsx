@@ -3,7 +3,7 @@ import { Tr, Td, HStack, Icon, Flex, Text } from "@chakra-ui/react";
 import { Code } from "@phosphor-icons/react";
 import { ButtonDeleteWithConfirm } from "./ButtonDeleteWithConfirm";
 
-export const InputRow: React.FC<{
+export const ModuleRow: React.FC<{
   name: string;
   content: string;
   onDelete: (name: string) => void;
