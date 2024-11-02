@@ -891,7 +891,7 @@
       import {
         Metapage,
         Metaframe,
-      } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@0.13.10-alpha1/dist/index.mjs";
+      } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.0.8";
 
       // Examine URL, and add modules
       globalThis.metapage = {
@@ -968,7 +968,7 @@
         editorUrl.hash = window.location.hash;
         metapageDef.metaframes.editor.url = editorUrl.href;
 
-        const mp = globalThis.metapage.Metapage.from(metapageDef);
+        const mp = await globalThis.metapage.Metapage.from(metapageDef);
         globalThis.metapageEditor = mp;
         const editorMetaframe = mp.getMetaframe("editor");
         const iframe = await editorMetaframe.iframe;
@@ -995,7 +995,7 @@
           const url = event?.definition?.metaframes?.editor?.url;
           if (url) {
             const urlBlob = new URL(url);
-            updateCode(urlBlob);
+            updateCode(urlBlob.hash);
           }
         });
       };
