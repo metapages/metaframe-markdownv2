@@ -891,7 +891,7 @@
       import {
         Metapage,
         Metaframe,
-      } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.0.8";
+      } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.1.0";
 
       // Examine URL, and add modules
       globalThis.metapage = {
@@ -936,7 +936,7 @@
           }
           refreshUpdateSvgButton();
 
-          setHashParamInWindow("edit", false);
+          setHashParamInWindow("edit", undefined);
           document.getElementById("root").className =
             "root borderFatSolidGreen";
           document.getElementById("editor-root").className =
