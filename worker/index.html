@@ -175,16 +175,14 @@
         getUrlHashParamsFromHashString,
         blobFromBase64String,
         getHashParamValueJsonFromWindow,
-        setHashValueJsonInHashString,
+        setHashParamValueJsonInHashString,
         setHashParamInWindow,
-      } from "https://cdn.jsdelivr.net/npm/@metapages/hash-query@0.5.4";
+      } from "https://cdn.jsdelivr.net/npm/@metapages/hash-query@0.6.5";
       import {
         Metapage,
         Metaframe,
         isIframe,
-      // } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.1.0";
-    } from "https://localhost:4441/lib/metapage/index.js";
-     
+      } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.1.3";
 
       globalThis.logStdout = (s) => {
         const root = document.getElementById("root");
@@ -377,7 +375,7 @@
           newUrl.searchParams.delete("modules");
 
           let currentHash = newUrl.hash;
-          currentHash = setHashValueJsonInHashString(
+          currentHash = setHashParamValueJsonInHashString(
             currentHash,
             "modules",
             modules
@@ -385,7 +383,7 @@
           // TODO This works because we don't currently use config, but this will break stuff later
           v1Config = v1Config || {};
           delete v1Config.modules;
-          currentHash = setHashValueJsonInHashString(
+          currentHash = setHashParamValueJsonInHashString(
             currentHash,
             "c",
             Object.keys(v1Config).length === 0 ? undefined : v1Config
