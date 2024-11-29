@@ -79,6 +79,7 @@ export const SectionIO: React.FC = () => {
             [values.name]: typeThing,
           };
         }
+        newIoValues.version = "1";
         setDefinition(newIoValues);
       }
       onClose();
