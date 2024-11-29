@@ -26,7 +26,7 @@ import {
   VStack,
 } from "@chakra-ui/react";
 import { useHashParamJson } from "@metapages/hash-query";
-import { MetaframeDefinitionV1 } from "@metapages/metapage";
+import { isEmptyMetaframeDefinition, MetaframeDefinitionV1 } from "@metapages/metapage";
 import { DownloadSimple, Plus, UploadSimple } from "@phosphor-icons/react";
 
 import { ButtonDeleteWithConfirm } from "./ButtonDeleteWithConfirm";
@@ -52,7 +52,13 @@ export const SectionIO: React.FC = () => {
       } else {
         delete newIoValues.outputs[name];
       }
-      setDefinition(newIoValues);
+      newIoValues.version = "1";
+
+      if (isEmptyMetaframeDefinition(newIoValues)) {
+        setDefinition(undefined);
+      } else {
+        setDefinition(newIoValues);
+      }
     },
     [definition, setDefinition]
   );
