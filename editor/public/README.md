@@ -50,7 +50,7 @@ Output values can be strings, JSON, objects, arrays, numbers, ArrayBuffers, type
 
 ### Define Inputs and Outputs
 
-In `Setting` you can define inputs and outputs. This doesn't change how the code runs, but it allows much easier connecting upstream and downstream metaframes when editing [metapages](https://metapage.io).
+In `Settings` you can define inputs and outputs. This doesn't change how the code runs, but it allows much easier connecting upstream and downstream metaframes when editing [metapages](https://metapage.io).
 
 In this example, we defined an input: `input.json` and an output `data.csv`:
 
