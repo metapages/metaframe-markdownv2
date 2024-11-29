@@ -1,11 +1,10 @@
-import React, { useCallback } from "react";
+import React, { useCallback } from 'react';
 
-import { useFormik } from "formik";
-import * as yup from "yup";
+import { useFormik } from 'formik';
+import * as yup from 'yup';
 
 import {
   Button,
-  HStack,
   Icon,
   Input,
   Modal,
@@ -16,8 +15,8 @@ import {
   ModalOverlay,
   Text,
   useDisclosure,
-} from "@chakra-ui/react";
-import { Plus } from "@phosphor-icons/react";
+} from '@chakra-ui/react';
+import { Plus } from '@phosphor-icons/react';
 
 const validationSchema = yup.object({
   modulePath: yup.string(),
@@ -37,7 +36,7 @@ export const AddModuleButtonAndModal: React.FC<{
       }
       onClose();
     },
-    [onClose, add],
+    [onClose, add]
   );
 
   const formik = useFormik({
@@ -55,10 +54,19 @@ export const AddModuleButtonAndModal: React.FC<{
 
   return (
     <>
-      <HStack onClick={onToggle} aria-label="add input">
+      <Button
+        variant="ghost"
+        leftIcon={<Icon as={Plus} boxSize={6} />}
+        onClick={onToggle}
+        aria-label="add module"
+      >
+        {text}
+      </Button>
+
+      {/* <HStack onClick={onToggle} aria-label="add module">
         <Icon boxSize={6} as={Plus} />
         {text ? <Text size={"med"}>{text}</Text> : null}
-      </HStack>
+      </HStack> */}
       <Modal isOpen={isOpen} onClose={closeAndClear}>
         <ModalOverlay />
         <ModalContent>
