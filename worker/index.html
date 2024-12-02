@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <base target="_parent">
+    <base target="_parent" />
     <title>Metaframe JS</title>
     <style>
       html,
@@ -34,7 +34,7 @@
         top: 10px;
         left: calc(100vw - 90px);
         z-index: 1000;
-        background-color: #F9F9F9;
+        background-color: #f9f9f9;
         border: 0px;
         padding: 0px;
         margin: 0px;
@@ -76,15 +76,15 @@
       }
 
       .root-with-editor {
-          position: absolute;
-          top: 0px;
-          height: 100vh;
-          max-height: 100vh;
-          z-index: 2;
-          overflow: hidden;
-          max-width: calc(100vw - 10ch);
-          min-width: 0px;
-        }
+        position: absolute;
+        top: 0px;
+        height: 100vh;
+        max-height: 100vh;
+        z-index: 2;
+        overflow: hidden;
+        max-width: calc(100vw - 10ch);
+        min-width: 0px;
+      }
 
       /**
        * Special handling of iframes for ensuring the metaframe is correctly maximized.
@@ -159,31 +159,34 @@
         opacity: 1; /* Make the element fully opaque (visible) when hovered */
       }
     </style>
-
   </head>
   <body>
     <button id="menu-button">
-      <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="#818382" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"></path></svg>
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        width="15"
+        height="15"
+        fill="#818382"
+        viewBox="0 0 256 256"
+      >
+        <path
+          d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"
+        ></path>
+      </svg>
       <span>Edit</span>
     </button>
 
     <div id="root" class="root borderFatSolidGreen transparent"></div>
-    <div id="editor-root" class="editor-container-hidden borderDashedPurple transparent"></div>
+    <div
+      id="editor-root"
+      class="editor-container-hidden borderDashedPurple transparent"
+    ></div>
 
-    <script type="module">
-      import {
-        getUrlHashParamsFromHashString,
-        blobFromBase64String,
-        getHashParamValueJsonFromWindow,
-        setHashParamValueJsonInHashString,
-        setHashParamInWindow,
-      } from "https://cdn.jsdelivr.net/npm/@metapages/hash-query@0.6.5";
-      import {
-        Metapage,
-        Metaframe,
-        isIframe,
-      } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.4.1";
-
+    <!-- 
+        This script is only to load the import map (if any) which
+      must be loaded before the main module script below.
+    -->
+    <script id="import-map-loader">
       globalThis.logStdout = (s) => {
         const root = document.getElementById("root");
         const pre = document.createElement("pre");
@@ -202,26 +205,217 @@
         root.appendChild(pre);
         root.scrollTop = root.scrollHeight;
       };
-     
+
+      const blobFromBase64String = (value) => {
+        if (value && value.length > 0) {
+          const blob = JSON.parse(decodeURIComponent(atob(value)));
+          return blob;
+        }
+        return undefined;
+      };
+
+      const getUrlHashParamsFromHashString = (hash) => {
+        let hashString = hash;
+        while (hashString.startsWith("#")) {
+          hashString = hashString.substring(1);
+        }
+
+        const queryIndex = hashString.indexOf("?");
+        if (queryIndex === -1) {
+          return [hashString, {}];
+        }
+        const preHashString = hashString.substring(0, queryIndex);
+        hashString = hashString.substring(queryIndex + 1);
+        const hashObject = {};
+        hashString
+          .split("&")
+          .filter((s) => s.length > 0)
+          .map((s) => {
+            const dividerIndex = s.indexOf("=");
+            if (dividerIndex === -1) {
+              return [s, ""];
+            }
+            const key = s.substring(0, dividerIndex);
+            const value = s.substring(dividerIndex + 1);
+            return [key, value];
+          })
+          .forEach(([key, value]) => {
+            hashObject[key] = value;
+          });
+
+        Object.keys(hashObject).forEach((key) => {
+          try {
+            hashObject[key] = decodeURI(hashObject[key]);
+          } catch (ignored) {
+            hashObject[key] = hashObject[key];
+          }
+        });
+        return [preHashString, hashObject];
+      };
+
+      // Get everything after # then after ?
+      const getUrlHashParams = (url) => {
+        const urlBlob = new URL(url);
+        return getUrlHashParamsFromHashString(urlBlob.hash);
+      };
+
+      const getHashParamValue = (url, key) => {
+        const [_, hashParams] = getUrlHashParams(url);
+        return hashParams[key];
+      };
+
+      const getHashParamValueJson = (url, key) => {
+        const valueString = getHashParamValue(url, key);
+        if (valueString && valueString !== "") {
+          const value = blobFromBase64String(valueString);
+          return value;
+        }
+        return;
+      };
+
+      const getHashParamValueJsonFromWindow = (key) => {
+        return getHashParamValueJson(window.location.href, key);
+      };
+
+      /**
+       * Decodes a base64-encoded string.
+       *
+       * @see {@link https://datatracker.ietf.org/doc/html/rfc4648#section-4}
+       *
+       * @param b64 The base64-encoded string to decode.
+       * @returns The decoded data.
+       *
+       * @example
+       * ```ts
+       * import { decodeBase64 } from "https://deno.land/std@$STD_VERSION/encoding/base64.ts";
+       *
+       * decodeBase64("Zm9vYmFy"); // Uint8Array(6) [ 102, 111, 111, 98, 97, 114 ]
+       * ```
+       */
+      // function decodeBase64(b64string) { //: Uint8Array
+      //   const binString = atob(b64string);
+      //   const size = binString.length;
+      //   const bytes = new Uint8Array(size);
+      //   for (let i = 0; i < size; i++) {
+      //     bytes[i] = binString.charCodeAt(i);
+      //   }
+      //   return bytes;
+      // }
+
+      // const urlToUint8Array = async (url) => { //: Promise<Uint8Array>
+      //   const response = await fetch(url, { redirect: "follow" });
+      //   if (!response.ok) {
+      //     throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
+      //   }
+      //   const arrayBuffer = await response.arrayBuffer();
+      //   return new Uint8Array(arrayBuffer);
+      // };
+
+      // const fetchBlobFromHash = async (
+      //   hash,
+      //   address
+      // ) => { //: Promise<ArrayBuffer>
+      //   const resp = await fetch(`${address}/download/${hash}`);
+      //   const json = await resp.json(); //: { url: string; ref: DataRef }
+      //   const arrayBuffer = await fetchBlobFromUrl(json.url);
+      //   return arrayBuffer;
+      // };
+
+      // const DataRefTypesSet = new Set(["base64", "utf8", "json", "url", "key"]);
+      // const isDataRef = (ref) => { //: boolean
+      //   return !!(
+      //     typeof ref === "object" &&
+      //     ref?.value &&
+      //     DataRefTypesSet.has(ref?.type)
+      //   );
+      // };
+
+      // const getQueryParamValueJsonFromWindow = (key) => {
+      //   const url = new URL(window.location.href);
+      //   const valueString = url.searchParams.get(key);
+
+      //   if (valueString && valueString !== "") {
+      //     const value = blobFromBase64String(valueString);
+      //     return value;
+      //   }
+      //   return;
+      // };
+
+      globalThis.foundImportMap = false;
+
+      let modules = getHashParamValueJsonFromWindow("modules");
+      if (modules) {
+        for (let scriptOrCss of modules) {
+          try {
+            if (scriptOrCss.startsWith("{")) {
+              if (foundImportMap) {
+                window.logStderr(
+                  "Found multiple import maps, only the first will be used"
+                );
+                continue;
+              }
+              const scriptOrCssDecoded = decodeURIComponent(scriptOrCss);
+              const maybeImports = JSON.parse(scriptOrCssDecoded);
+              if (maybeImports.imports) {
+                foundImportMap = true;
+                var importMapElement = document.createElement("script");
+                importMapElement.innerHTML = scriptOrCssDecoded;
+                importMapElement.type = "importmap";
+                document
+                  .getElementById("import-map-loader")
+                  .appendChild(importMapElement);
+                // import maps do not fire onload events, so resolve here
+                // the timing of this may not be perfect, so note this here
+                // in case there are issues
+                break;
+              }
+            }
+          } catch (error) {
+            console.error(error);
+          }
+        }
+      }
+    </script>
+
+    <script type="module">
+      import {
+        getUrlHashParamsFromHashString,
+        blobFromBase64String,
+        getHashParamValueJsonFromWindow,
+        setHashParamValueJsonInHashString,
+        setHashParamInWindow,
+      } from "https://cdn.jsdelivr.net/npm/@metapages/hash-query@0.7.7";
+      import {
+        Metapage,
+        Metaframe,
+        isIframe,
+      } from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.4.4";
+
       // Ripped from dataref lib. Should be moved to a shared lib
       const resolveDataRef = async (ref) => {
         switch (ref.type) {
           case "base64":
-            return new Blob([decodeBase64(ref.value)], { type: 'application/octet-stream' });
+            return new Blob([decodeBase64(ref.value)], {
+              type: "application/octet-stream",
+            });
           case "utf8":
             return ref.value;
           case "json":
-            return ref.value
+            return ref.value;
           case "url":
             const arrayBufferFromUrl = await urlToUint8Array(ref.value);
-            return new Blob([new Uint8Array(arrayBufferFromUrl)], { type: 'application/octet-stream' });
+            return new Blob([new Uint8Array(arrayBufferFromUrl)], {
+              type: "application/octet-stream",
+            });
           case "key":
             // hard code this for now
             const arrayBufferFromKey = await fetchBlobFromHash(
               ref.value,
               "https://container.mtfm.io"
             );
-            return new Blob([new Uint8Array(arrayBufferFromKey)], { type: 'application/octet-stream' });
+            return new Blob([new Uint8Array(arrayBufferFromKey)], {
+              type: "application/octet-stream",
+            });
           default: // undefined assume DataRefType.Base64
             throw `Not yet implemented: DataRef.type "${ref.type}" unknown`;
         }
@@ -242,7 +436,8 @@
        * decodeBase64("Zm9vYmFy"); // Uint8Array(6) [ 102, 111, 111, 98, 97, 114 ]
        * ```
        */
-      function decodeBase64(b64string) { //: Uint8Array
+      function decodeBase64(b64string) {
+        //: Uint8Array
         const binString = atob(b64string);
         const size = binString.length;
         const bytes = new Uint8Array(size);
@@ -252,7 +447,8 @@
         return bytes;
       }
 
-      const urlToUint8Array = async (url) => { //: Promise<Uint8Array>
+      const urlToUint8Array = async (url) => {
+        //: Promise<Uint8Array>
         const response = await fetch(url, { redirect: "follow" });
         if (!response.ok) {
           throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
@@ -261,10 +457,8 @@
         return new Uint8Array(arrayBuffer);
       };
 
-      const fetchBlobFromHash = async (
-        hash,
-        address
-      ) => { //: Promise<ArrayBuffer>
+      const fetchBlobFromHash = async (hash, address) => {
+        //: Promise<ArrayBuffer>
         const resp = await fetch(`${address}/download/${hash}`);
         const json = await resp.json(); //: { url: string; ref: DataRef }
         const arrayBuffer = await fetchBlobFromUrl(json.url);
@@ -272,7 +466,8 @@
       };
 
       const DataRefTypesSet = new Set(["base64", "utf8", "json", "url", "key"]);
-      const isDataRef = (ref) => { //: boolean
+      const isDataRef = (ref) => {
+        //: boolean
         return !!(
           typeof ref === "object" &&
           ref?.value &&
@@ -287,7 +482,7 @@
         const [_, hashParams] = getUrlHashParamsFromHashString(
           window.location.hash
         );
-        const inEditMode = hashParams['edit'] === 'true';
+        const inEditMode = hashParams["edit"] === "true";
         if (inEditMode) {
           // do NOT change the visibility of the edit buttons
           return;
@@ -327,20 +522,20 @@
         if (value && value.length > 0) {
           try {
             return decodeURIComponent(atob(value));
-          } catch(err) {
+          } catch (err) {
             console.error(err);
             try {
               return atob(value);
-            } catch(err) {
+            } catch (err) {
               console.error(err);
               return undefined;
-            } 
+            }
           }
         }
         return undefined;
       };
 
-      let foundImportMap = false;
+      // let foundImportMap = false;
 
       // Dynamically add <script> and <link> tags to the document.head
       // and listen to the load events
@@ -397,123 +592,98 @@
         // Load a single script, module, or css, awaiting until done
         const loadModuleOrCss = async (s) => {
           return new Promise((resolve, reject) => {
-            if (!foundImportMap && s.startsWith("{")) {
-              try {
-                if (foundImportMap) {
-                  window.logStderr(
-                    "Found multiple import maps, only the first will be used"
-                  );
-                  return;
+            // import maps are handled in the import-map-loader script
+            if (s.startsWith("{")) {
+              resolve();
+              return;
+            }
+            // if (!foundImportMap && s.startsWith("{")) {
+            //   try {
+            //     if (foundImportMap) {
+            //       window.logStderr(
+            //         "Found multiple import maps, only the first will be used"
+            //       );
+            //       return;
+            //     }
+            //     const maybeImports = JSON.parse(decodeURIComponent(s));
+            //     if (maybeImports.imports) {
+            //       foundImportMap = true;
+            //       var importMapElement = document.createElement("script");
+            //       importMapElement.innerHTML = decodeURIComponent(s);
+            //       importMapElement.type = "importmap";
+            //       document
+            //         .getElementsByTagName("head")[0]
+            //         .appendChild(importMapElement);
+            //       // import maps do not fire onload events, so resolve here
+            //       // the timing of this may not be perfect, so note this here
+            //       // in case there are issues
+            //       resolve();
+            //       return;
+            //     }
+            //   } catch (e) {
+            //     console.log("Error loading module", s);
+            //     window.logStderr(`error loading module: ${s}`);
+            //     return;
+            //   }
+            // } else {
+            let elementTrimmed = s.trim();
+            if (elementTrimmed.startsWith("<link")) {
+              const href = /<link\s+.*href="([^"]*)"/.exec(elementTrimmed)?.[1];
+              if (href) {
+                const linkImport = document.createElement("link");
+                linkImport.href = href;
+                const linkRel = /<link\s+.*rel="([^"]*)"/.exec(
+                  elementTrimmed
+                )?.[1];
+                if (linkRel) {
+                  linkImport.rel = linkRel;
                 }
-                const maybeImports = JSON.parse(decodeURIComponent(s));
-                if (maybeImports.imports) {
-                  foundImportMap = true;
-                  var importMapElement = document.createElement("script");
-                  importMapElement.innerHTML = decodeURIComponent(s);
-                  importMapElement.type = "importmap";
-                  document
-                    .getElementsByTagName("head")[0]
-                    .appendChild(importMapElement);
-                  // import maps do not fire onload events, so resolve here
-                  // the timing of this may not be perfect, so note this here
-                  // in case there are issues
+                const linkType = /<link\s+.*type="([^"]*)"/.exec(
+                  elementTrimmed
+                )?.[1];
+                if (linkType) {
+                  linkImport.type = linkType;
+                }
+
+                const linkCrossorigin = /<link\s+.*crossorigin="([^"]*)"/.exec(
+                  elementTrimmed
+                )?.[1];
+                if (linkCrossorigin) {
+                  linkImport.crossorigin = linkCrossorigin;
+                }
+
+                linkImport.addEventListener("load", () => {
                   resolve();
-                  return;
-                }
-              } catch (e) {
-                console.log("Error loading module", s);
-                window.logStderr(`error loading module: ${s}`);
-                return;
-              }
-            } else {
-              let elementTrimmed = s.trim();
-              if (elementTrimmed.startsWith("<link")) {
-                const href = /<link\s+.*href="([^"]*)"/.exec(
-                  elementTrimmed
-                )?.[1];
-                if (href) {
-                  const linkImport = document.createElement("link");
-                  linkImport.href = href;
-                  const linkRel = /<link\s+.*rel="([^"]*)"/.exec(
-                    elementTrimmed
-                  )?.[1];
-                  if (linkRel) {
-                    linkImport.rel = linkRel;
-                  }
-                  const linkType = /<link\s+.*type="([^"]*)"/.exec(
-                    elementTrimmed
-                  )?.[1];
-                  if (linkType) {
-                    linkImport.type = linkType;
-                  }
+                });
+                linkImport.addEventListener("error", (err) => {
+                  console.log("Error loading link", elementTrimmed);
+                  window.logStderr(
+                    `error loading script: ${elementTrimmed} error: ${err}`
+                  );
+                  reject(err);
+                });
 
-                  const linkCrossorigin =
-                    /<link\s+.*crossorigin="([^"]*)"/.exec(elementTrimmed)?.[1];
-                  if (linkCrossorigin) {
-                    linkImport.crossorigin = linkCrossorigin;
-                  }
-
-                  linkImport.addEventListener("load", () => {
-                    resolve();
-                  });
-                  linkImport.addEventListener("error", (err) => {
-                    console.log("Error loading link", elementTrimmed);
-                    window.logStderr(
-                      `error loading script: ${elementTrimmed} error: ${err}`
-                    );
-                    reject(err);
-                  });
-
-                  document
-                    .getElementsByTagName("head")[0]
-                    .appendChild(linkImport);
-                }
-              } else if (elementTrimmed.startsWith("<script")) {
-                const src = /<script\s+.*src="([^"]*)"/.exec(
-                  elementTrimmed
-                )?.[1];
-                if (src) {
-                  const scriptImport = document.createElement("script");
-                  scriptImport.async = true;
-                  scriptImport.src = src;
-                  const scriptType = /<script\s+.*type="([^"]*)"/.exec(
-                    elementTrimmed
-                  )?.[1];
-                  if (scriptType) {
-                    scriptImport.type = scriptType;
-                  }
-                  const scriptCrossorigin =
-                    /<script\s+.*crossorigin="([^"]*)"/.exec(
-                      elementTrimmed
-                    )?.[1];
-                  if (scriptCrossorigin) {
-                    scriptImport.crossorigin = scriptCrossorigin;
-                  }
-                  scriptImport.addEventListener("load", () => {
-                    resolve();
-                  });
-                  scriptImport.addEventListener("error", (err) => {
-                    console.log("Error loading script", elementTrimmed);
-                    window.logStderr(
-                      `error loading script: ${elementTrimmed} error: ${err}`
-                    );
-                    reject(err);
-                  });
-
-                  document
-                    .getElementsByTagName("head")[0]
-                    .appendChild(scriptImport);
-                }
-              } else {
-                // Assume it's a script
-
-                const scriptImport = document.createElement("script");
-                scriptImport.src = s;
-                scriptImport.async = true;
                 document
                   .getElementsByTagName("head")[0]
-                  .appendChild(scriptImport);
-
+                  .appendChild(linkImport);
+              }
+            } else if (elementTrimmed.startsWith("<script")) {
+              const src = /<script\s+.*src="([^"]*)"/.exec(elementTrimmed)?.[1];
+              if (src) {
+                const scriptImport = document.createElement("script");
+                scriptImport.async = true;
+                scriptImport.src = src;
+                const scriptType = /<script\s+.*type="([^"]*)"/.exec(
+                  elementTrimmed
+                )?.[1];
+                if (scriptType) {
+                  scriptImport.type = scriptType;
+                }
+                const scriptCrossorigin =
+                  /<script\s+.*crossorigin="([^"]*)"/.exec(elementTrimmed)?.[1];
+                if (scriptCrossorigin) {
+                  scriptImport.crossorigin = scriptCrossorigin;
+                }
                 scriptImport.addEventListener("load", () => {
                   resolve();
                 });
@@ -529,6 +699,30 @@
                   .getElementsByTagName("head")[0]
                   .appendChild(scriptImport);
               }
+            } else {
+              // Assume it's a script
+
+              const scriptImport = document.createElement("script");
+              scriptImport.src = s;
+              scriptImport.async = true;
+              document
+                .getElementsByTagName("head")[0]
+                .appendChild(scriptImport);
+
+              scriptImport.addEventListener("load", () => {
+                resolve();
+              });
+              scriptImport.addEventListener("error", (err) => {
+                console.log("Error loading script", elementTrimmed);
+                window.logStderr(
+                  `error loading script: ${elementTrimmed} error: ${err}`
+                );
+                reject(err);
+              });
+
+              document
+                .getElementsByTagName("head")[0]
+                .appendChild(scriptImport);
             }
           });
 
@@ -610,37 +804,39 @@
         const [_, hashParams] = getUrlHashParamsFromHashString(
           window.location.hash
         );
-        const editorWidth = hashParams['editorWidth'] || 80;
-        const inEditMode = hashParams['edit'] === 'true';
-        const defaultBgColor = hashParams['bgColor'];
+        const editorWidth = hashParams["editorWidth"] || 80;
+        const inEditMode = hashParams["edit"] === "true";
+        const defaultBgColor = hashParams["bgColor"];
         if (!inEditMode) {
           removeEditor();
         }
 
         // set up (maybe re-override globals)
         const root = document.getElementById("root");
-        root.style.width = inEditMode ? `calc(100% - ${editorWidth}ch)` : '100%';
+        root.style.width = inEditMode
+          ? `calc(100% - ${editorWidth}ch)`
+          : "100%";
         if (defaultBgColor) {
           root.style.background = defaultBgColor;
         }
 
         const editor = document.getElementById("editor-root");
-        editor.style.width = inEditMode ? `${editorWidth}ch` : '0%';
+        editor.style.width = inEditMode ? `${editorWidth}ch` : "0%";
 
         if (js) {
           try {
             globalThis.root = root;
             globalThis.setOutput = (key, value) => {
               metaframe.setOutput(key, value);
-            }
+            };
             globalThis.setOutputs = (outputs) => {
               metaframe.setOutputs(outputs);
-            }
+            };
 
             js = `"use strict"\n${js}`;
 
             // Create a Blob with the user code
-            const blob = new Blob([js], { type: 'application/javascript' });
+            const blob = new Blob([js], { type: "application/javascript" });
             // Create an object URL for the Blob
             const url = URL.createObjectURL(blob);
             let module = null;
@@ -648,7 +844,7 @@
               // Dynamically import the module using the Blob URL
               module = await import(url);
             } catch (error) {
-              globalThis.logStderr(`Error importing module: ${error.message}`)
+              globalThis.logStderr(`Error importing module: ${error.message}`);
             } finally {
               // Clean up by revoking the object URL
               URL.revokeObjectURL(url);
@@ -658,13 +854,13 @@
               return;
             }
 
-            // Move the user scriptUnload from global to local since we create our own 
+            // Move the user scriptUnload from global to local since we create our own
             const userCleanup = globalThis.scriptUnload;
             globalThis.scriptUnload = null;
 
             const ourHandleResize = (e) => {
               const width = root.getBoundingClientRect().width;
-	            const height = root.getBoundingClientRect().height;
+              const height = root.getBoundingClientRect().height;
               if (module.onResize) {
                 try {
                   module.onResize(width, height);
@@ -683,25 +879,31 @@
             };
 
             globalThis.addEventListener("resize", ourHandleResize, false);
-            
-            const resizeObserver = new ResizeObserver((entries) => ourHandleResize);
+
+            const resizeObserver = new ResizeObserver(
+              (entries) => ourHandleResize
+            );
             resizeObserver.observe(root);
 
             const handleInputs = async (inputs) => {
               if (module.onInputs) {
                 try {
-                  const datarefKeys = inputs ? Object.keys(inputs).filter(key => isDataRef(inputs[key])) : null;
+                  const datarefKeys = inputs
+                    ? Object.keys(inputs).filter((key) =>
+                        isDataRef(inputs[key])
+                      )
+                    : null;
                   if (datarefKeys && datarefKeys.length > 0) {
                     for (const key of datarefKeys) {
                       inputs[key] = await resolveDataRef(inputs[key]);
-                    }                  
+                    }
                   }
                   module.onInputs(inputs);
                 } catch (err) {
                   console.error("Error running onInputs", err);
                 }
               }
-            }
+            };
 
             const disposeInputsListener = metaframe.onInputs(handleInputs);
             handleInputs(metaframe.getInputs());
@@ -711,7 +913,7 @@
                 if (typeof userCleanup === "function") {
                   userCleanup();
                 }
-              } catch(err) {
+              } catch (err) {
                 console.error("Error running user cleanup", err);
               }
               resizeObserver.disconnect();
@@ -741,7 +943,6 @@
             };
 
             globalThis.scriptUnload = cleanupHandler;
-
           } catch (err) {
             console.error(err);
           }
@@ -766,7 +967,6 @@
       // reload on hash changes
       globalThis.addEventListener("hashchange", runJsFromUrl, false);
 
-
       const metapageDef = {
         metaframes: {
           editor: {
@@ -778,20 +978,19 @@
 
       const removeEditor = () => {
         if (globalThis.metapageEditor) {
-            globalThis.metapageEditor.dispose();
-            globalThis.metapageEditor = null;
-          }
-          const previousContainer = document.getElementById("iframe-container");
-          if (previousContainer) {
-            previousContainer.parentElement.removeChild(previousContainer);
-          }
-          refreshUpdateSvgButton();
+          globalThis.metapageEditor.dispose();
+          globalThis.metapageEditor = null;
+        }
+        const previousContainer = document.getElementById("iframe-container");
+        if (previousContainer) {
+          previousContainer.parentElement.removeChild(previousContainer);
+        }
+        refreshUpdateSvgButton();
 
-          setHashParamInWindow("edit", undefined);
-          document.getElementById("root").className =
-            "root borderFatSolidGreen";
-          document.getElementById("editor-root").className =
-            "editor-container-hidden borderDashedBlue";
+        setHashParamInWindow("edit", undefined);
+        document.getElementById("root").className = "root borderFatSolidGreen";
+        document.getElementById("editor-root").className =
+          "editor-container-hidden borderDashedBlue";
       };
 
       const onMenuClick = async () => {
@@ -802,7 +1001,7 @@
           return;
         }
         setHashParamInWindow("edit", true);
-        
+
         document.getElementById("menu-button").style.display = "none";
 
         // no previous editor detected, add the editor metapage
@@ -858,9 +1057,9 @@
       refreshUpdateSvgButton();
 
       const [_, hashParams] = getUrlHashParamsFromHashString(
-          window.location.hash
-        );
-      const inEditMode = hashParams['edit'] === 'true';
+        window.location.hash
+      );
+      const inEditMode = hashParams["edit"] === "true";
       if (inEditMode || !getJsFromUrl()) {
         // if editing, force showing the menu
         window.addEventListener("load", () => {

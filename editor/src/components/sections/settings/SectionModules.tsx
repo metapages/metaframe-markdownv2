@@ -18,6 +18,12 @@ export const SectionModules: React.FC = () => {
   const addNewInput = useCallback(
     (name: string) => {
       setModules(modules ? [...modules, name] : [name]);
+      if (name.startsWith("{")) {
+        // import maps require a reload to take effect
+        setTimeout(() => {
+          window.parent?.location.reload();
+        }, 1000);
+      }
     },
     [modules, setModules]
   );
