@@ -1,4 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
+
 import { useMetaframeUrl } from '/@/hooks/useMetaframeUrl';
 
 import {
@@ -8,10 +12,10 @@ import {
   useClipboard,
   useToast,
 } from '@chakra-ui/react';
-import { Link } from "@phosphor-icons/react";
 import {
-  setHashValueInHashString,
-} from '@metapages/hash-query';
+  setHashParamValueInHashString,
+} from '@metapages/hash-query/react-hooks';
+import { Link } from '@phosphor-icons/react';
 
 export const ButtonCopyExternalLink: React.FC = () => {
   const { url } = useMetaframeUrl();
@@ -20,7 +24,7 @@ export const ButtonCopyExternalLink: React.FC = () => {
   useEffect(() => {
     if (!url) return;
     const isLocal = window.location.hostname.includes('localhost');
-    let newUrl = setHashValueInHashString(url, 'edit', undefined)
+    let newUrl = setHashParamValueInHashString(url, 'edit', undefined)
     if (isLocal) {
       // TODO: swap localhost in for url val, useMetaframeUrl uses env variables to construct the path
       setUrlForCopy(newUrl);

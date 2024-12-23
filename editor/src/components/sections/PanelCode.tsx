@@ -2,15 +2,14 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import stringify from "safe-stable-stringify";
 
 import { useMetaframeUrl } from '/@/hooks/useMetaframeUrl';
+import { useOptions } from '/@/hooks/useOptions';
+import stringify from 'safe-stable-stringify';
 
-import { useHashParamBase64 } from '@metapages/hash-query';
+import { useHashParamBase64 } from '@metapages/hash-query/react-hooks';
 import { MetaframeInputMap } from '@metapages/metapage';
 import { MetaframeStandaloneComponent } from '@metapages/metapage-react';
-import { Box } from '@chakra-ui/react';
-import { useOptions } from '/@/hooks/useOptions';
 
 export const encodeOptions = (options: any): string => {
   const text: string = stringify(options) || "";

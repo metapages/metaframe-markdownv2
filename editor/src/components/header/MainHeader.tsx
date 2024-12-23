@@ -1,12 +1,24 @@
-import React from "react";
+import React from 'react';
 
-import { useStore } from "/@/store";
+import { useStore } from '/@/store';
 
-import {Box, HStack, Icon, Button, Tooltip, useMediaQuery } from "@chakra-ui/react";
-import { useHashParamBoolean } from "@metapages/hash-query";
-import { Gear, X, QuestionMark } from "@phosphor-icons/react";
-import { ButtonCopyExternalLink } from "./components/ButtonCopyExternalLink";
-import { ButtonGotoExternalLink } from "./components/ButtonGotoExternalLink";
+import {
+  Box,
+  Button,
+  HStack,
+  Icon,
+  Tooltip,
+  useMediaQuery,
+} from '@chakra-ui/react';
+import { useHashParamBoolean } from '@metapages/hash-query/react-hooks';
+import {
+  Gear,
+  QuestionMark,
+  X,
+} from '@phosphor-icons/react';
+
+import { ButtonCopyExternalLink } from './components/ButtonCopyExternalLink';
+import { ButtonGotoExternalLink } from './components/ButtonGotoExternalLink';
 
 export const capitalize = (str: string): string => {
   if (!str.length) return str;

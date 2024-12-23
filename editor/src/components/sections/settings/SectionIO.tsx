@@ -1,7 +1,10 @@
-import React, { useCallback, useState } from "react";
+import React, {
+  useCallback,
+  useState,
+} from 'react';
 
-import { useFormik } from "formik";
-import * as yup from "yup";
+import { useFormik } from 'formik';
+import * as yup from 'yup';
 
 import {
   Button,
@@ -24,12 +27,19 @@ import {
   Tr,
   useDisclosure,
   VStack,
-} from "@chakra-ui/react";
-import { useHashParamJson } from "@metapages/hash-query";
-import { isEmptyMetaframeDefinition, MetaframeDefinitionV1 } from "@metapages/metapage";
-import { DownloadSimple, Plus, UploadSimple } from "@phosphor-icons/react";
+} from '@chakra-ui/react';
+import { useHashParamJson } from '@metapages/hash-query/react-hooks';
+import {
+  isEmptyMetaframeDefinition,
+  MetaframeDefinitionV1,
+} from '@metapages/metapage';
+import {
+  DownloadSimple,
+  Plus,
+  UploadSimple,
+} from '@phosphor-icons/react';
 
-import { ButtonDeleteWithConfirm } from "./ButtonDeleteWithConfirm";
+import { ButtonDeleteWithConfirm } from './ButtonDeleteWithConfirm';
 
 const validationSchema = yup.object({
   name: yup.string(),

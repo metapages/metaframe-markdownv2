@@ -6,35 +6,32 @@ import {
 import { ConfigOptions } from '/@/shared/config';
 
 import {
-  setHashValueInHashString,
-  setHashValueJsonInUrl,
+  setHashParamValueInHashString,
+  setHashParamValueJsonInUrl,
   stringToBase64String,
   useHashParamBase64,
   useHashParamJson,
-} from '@metapages/hash-query';
-import { MetaframeDefinitionV6 } from '@metapages/metapage';
+} from '@metapages/hash-query/react-hooks';
+import { MetaframeDefinitionV1 } from '@metapages/metapage';
 
 export const useMetaframeUrl = () => {
   const [url, setUrl] = useState<string>();
   const [code] = useHashParamBase64("js");
   const [config] = useHashParamJson<ConfigOptions>("c");
-  const [metaframeDef] = useHashParamJson<MetaframeDefinitionV6>("mfjson");
+  const [metaframeDef] = useHashParamJson<MetaframeDefinitionV1>("definition");
   const [modules] = useHashParamJson<string[]>("modules");
 
   // update the url
   useEffect(() => {
-    let hash = window.location.hash.substring(1);
-    let hashParams = new URLSearchParams(hash);
-    // const url = new URL(window.location.href);
     let href = window.location.href;
     if (metaframeDef) {
-      href = setHashValueJsonInUrl(href, "mfjson", metaframeDef);
+      href = setHashParamValueJsonInUrl(href, "definition", metaframeDef);
     }
     if (modules) {
-      href = setHashValueJsonInUrl(href, "modules", modules);
+      href = setHashParamValueJsonInUrl(href, "modules", modules);
     }
     if (config) {
-      href = setHashValueJsonInUrl(href, "c", config);
+      href = setHashParamValueJsonInUrl(href, "c", config);
     }
 
     const url = new URL(href);
@@ -47,7 +44,7 @@ export const useMetaframeUrl = () => {
     // WATCH THIS DIFFERENCE BETWEEN THIS AND BELOW
     // 1!
     if (code) {
-      url.hash = setHashValueInHashString(
+      url.hash = setHashParamValueInHashString(
         url.hash,
         "js",
         stringToBase64String(code)
