@@ -208,6 +208,10 @@
 
       const blobFromBase64String = (value) => {
         if (value && value.length > 0) {
+          // https://github.com/metapages/metaframe-js/issues/11
+          while (value.endsWith("%3D")) {
+            value = value.slice(0, -3);
+          }
           const blob = JSON.parse(decodeURIComponent(atob(value)));
           return blob;
         }
@@ -384,7 +388,7 @@
         getHashParamValueJsonFromWindow,
         setHashParamValueJsonInHashString,
         setHashParamInWindow,
-      } from "https://cdn.jsdelivr.net/npm/@metapages/hash-query@0.7.7";
+      } from "https://cdn.jsdelivr.net/npm/@metapages/hash-query@0.8.4";
       import {
         Metapage,
         Metaframe,
@@ -521,6 +525,10 @@
       const stringFromBase64String = (value) => {
         if (value && value.length > 0) {
           try {
+            // https://github.com/metapages/metaframe-js/issues/11
+            while (value.endsWith("%3D")) {
+              value = value.slice(0, -3);
+            }
             return decodeURIComponent(atob(value));
           } catch (err) {
             console.error(err);
