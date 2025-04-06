@@ -22,6 +22,7 @@ export const capitalize = (str: string): string => {
 
 export const MainHeader: React.FC = () => {
   const [_edit, setEdit] = useHashParamBoolean("edit");
+  const [minimalHeader] = useHashParamBoolean("minimalheader");
   const [isLargerThan400] = useMediaQuery("(min-width: 400px)");
 
   // only show the edit button if the command points to a script in the inputs
@@ -90,30 +91,32 @@ export const MainHeader: React.FC = () => {
       >
         Markdown
       </Button>
-      <HStack
-        borderLeft={"1px"}
-        right={0}
-        px={4}
-        bg={"gray.100"}
-        justifyContent={"space-around"}
-        h={"headerHeight"}
-        w={"16rem"}
-      >
-        {icon(
-          Gear,
-          "settings",
-          () => setShownPanel(shownPanel === "settings" ? null : "settings"),
-          true
-        )}
-        {icon(
-          QuestionMark,
-          "docs",
-          () => setShownPanel(shownPanel === "docs" ? null : "docs"),
-          true
-        )}
-        <ButtonCopyExternalLink />
-        {icon(X, "close", () => setEdit(false))}
-      </HStack>
+      {!minimalHeader && (
+        <HStack
+          borderLeft={"1px"}
+          right={0}
+          px={4}
+          bg={"gray.100"}
+          justifyContent={"space-around"}
+          h={"headerHeight"}
+          w={"16rem"}
+        >
+          {icon(
+            Gear,
+            "settings",
+            () => setShownPanel(shownPanel === "settings" ? null : "settings"),
+            true
+          )}
+          {icon(
+            QuestionMark,
+            "docs",
+            () => setShownPanel(shownPanel === "docs" ? null : "docs"),
+            true
+          )}
+          <ButtonCopyExternalLink />
+          {icon(X, "close", () => setEdit(false))}
+        </HStack>
+      )}
     </HStack>
   );
 };

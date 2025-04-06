@@ -46,6 +46,7 @@ publish: _ensure_deployctl
   cp -r editor/dist deploy/editor
   cp -r worker/server.ts deploy/
   cp -r worker/index.html deploy/
+  cp -r worker/public deploy/
   cd deploy
   deployctl deploy --project=metaframe-mdv2 --prod server.ts
 

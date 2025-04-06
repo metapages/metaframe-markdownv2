@@ -6,7 +6,8 @@ import { EditBgColor } from "./EditBgColor";
 import { EditButtonSettings } from "./EditButtonSettings";
 import { EditColorScheme } from "./EditColorScheme";
 import { EditEditorWidth } from "./EditEditorWidth";
-import { EdiDisplayMode } from "./EdiDisplayMode";
+import { EditDisplayMode } from "./EditDisplayMode";
+import { EditMinimalHeader } from "./EditMinimalHeader";
 
 export const SectionOptions: React.FC = () => {
   return (
@@ -19,13 +20,15 @@ export const SectionOptions: React.FC = () => {
     >
       <EditButtonSettings />
       <Divider />
-      <EdiDisplayMode />
+      <EditDisplayMode />
       <Divider />
       <EditColorScheme />
       <Divider />
       <EditBgColor />
       <Divider />
       <EditEditorWidth />
+      <Divider />
+      <EditMinimalHeader />
     </VStack>
   );
 };

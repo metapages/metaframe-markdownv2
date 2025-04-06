@@ -36,6 +36,7 @@ const LocalEditor: React.FC<{
       hidemenuififrame: true,
       mode: "markdown",
       theme: themeOptions?.theme || "vs-light",
+      hideLineNumbers: true,
     });
     return `https://editor.mtfm.io/#?hm=disabled&options=${options}`;
   };

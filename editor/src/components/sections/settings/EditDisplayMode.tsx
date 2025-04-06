@@ -33,7 +33,7 @@ const validationSchema = yup.object({
 
 interface FormType extends yup.InferType<typeof validationSchema> {}
 
-export const EdiDisplayMode: React.FC = () => {
+export const EditDisplayMode: React.FC = () => {
   const [options, setOptions] = useOptions();
 
   const onSubmit = useCallback(
