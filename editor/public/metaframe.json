@@ -1,6 +1,13 @@
 {
 	"version": "1",
 	"metadata": {
-		"title": "Javascript Metaframe"
+		"title": "Markdown Metaframe"
+	},
+	"inputs": {
+		"md": {
+			"type": "text/markdown",
+			"description": "The markdown content to display"
+		}
 	}
 }
+

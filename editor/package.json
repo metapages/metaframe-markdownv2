@@ -31,6 +31,7 @@
     "@metapages/metapage-react": "^0.2.0",
     "@phosphor-icons/react": "^2.1.7",
     "@react-typed-hooks/use-key-press": "^1.0.5",
+    "debounce": "^2.2.0",
     "formik": "^2.4.5",
     "framer-motion": "^10.16.12",
     "react": "^18.2.0",
@@ -41,6 +42,7 @@
     "zustand": "^5.0.0-rc.2"
   },
   "devDependencies": {
+    "@types/debounce": "^1.2.4",
     "@types/node": "^18.19.2",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

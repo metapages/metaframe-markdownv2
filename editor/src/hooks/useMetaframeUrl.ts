@@ -1,9 +1,6 @@
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from "react";
 
-import { ConfigOptions } from '/@/shared/config';
+import { ConfigOptions } from "/@/shared/config";
 
 import {
   setHashParamValueInHashString,
@@ -11,12 +8,12 @@ import {
   stringToBase64String,
   useHashParamBase64,
   useHashParamJson,
-} from '@metapages/hash-query/react-hooks';
-import { MetaframeDefinitionV1 } from '@metapages/metapage';
+} from "@metapages/hash-query/react-hooks";
+import { MetaframeDefinitionV1 } from "@metapages/metapage";
 
 export const useMetaframeUrl = () => {
   const [url, setUrl] = useState<string>();
-  const [code] = useHashParamBase64("js");
+  const [code] = useHashParamBase64("md");
   const [config] = useHashParamJson<ConfigOptions>("c");
   const [metaframeDef] = useHashParamJson<MetaframeDefinitionV1>("definition");
   const [modules] = useHashParamJson<string[]>("modules");
@@ -46,7 +43,7 @@ export const useMetaframeUrl = () => {
     if (code) {
       url.hash = setHashParamValueInHashString(
         url.hash,
-        "js",
+        "md",
         stringToBase64String(code)
       );
     }
