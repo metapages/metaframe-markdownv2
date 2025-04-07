@@ -44,8 +44,8 @@ const LocalEditor: React.FC<{
   const onCodeOutputsUpdate = useCallback(
     debounce((outputs: MetaframeInputMap) => {
       setCode(outputs.text);
-    }, 2000),
-    [setCode]
+    }, 500),
+    [setCode],
   );
 
   return (

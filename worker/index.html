@@ -261,40 +261,11 @@
         // Load a single script, module, or css, awaiting until done
         const loadModuleOrCss = async (s) => {
           return new Promise((resolve, reject) => {
-            // import maps are handled in the import-map-loader script
+
             if (s.startsWith("{")) {
               resolve();
               return;
             }
-            // if (!foundImportMap && s.startsWith("{")) {
-            //   try {
-            //     if (foundImportMap) {
-            //       window.logStderr(
-            //         "Found multiple import maps, only the first will be used"
-            //       );
-            //       return;
-            //     }
-            //     const maybeImports = JSON.parse(decodeURIComponent(s));
-            //     if (maybeImports.imports) {
-            //       foundImportMap = true;
-            //       var importMapElement = document.createElement("script");
-            //       importMapElement.innerHTML = decodeURIComponent(s);
-            //       importMapElement.type = "importmap";
-            //       document
-            //         .getElementsByTagName("head")[0]
-            //         .appendChild(importMapElement);
-            //        import maps do not fire onload events, so resolve here
-            //        the timing of this may not be perfect, so note this here
-            //        in case there are issues
-            //       resolve();
-            //       return;
-            //     }
-            //   } catch (e) {
-            //     console.log("Error loading module", s);
-            //     window.logStderr(`error loading module: ${s}`);
-            //     return;
-            //   }
-            // } else {
             let elementTrimmed = s.trim();
             if (elementTrimmed.startsWith("<link")) {
               const href = /<link\s+.*href="([^"]*)"/.exec(elementTrimmed)
@@ -375,25 +346,32 @@
       };
 
       const runmdFromUrl = async () => {
+        let mdContent = getMdFromUrl();
+        await runOnMarkdown(mdContent);
+      }
+
+      const runmdFromInputs = async () => {
+        await runOnMarkdown(metaframe.getInput("md"));
+      }
+
+      let _lastMdContent = null;
+      const runOnMarkdown = async (mdContent) => {
+
         // ensure all modules are loaded
         await Promise.all(window.__metaframeMdAwaiting);
-        // clear all children of root
-        document
-          .getElementById("root")
-          .textContent = "";
 
         const [___, hashParamsCurrent] = getUrlHashParamsFromHashString(window.location.hash);
-        const editorWidth = hashParamsCurrent["editorWidth"] || 80;
+        const editorWidth = hashParamsCurrent["editorWidth"] || "80ch";
         const inEditMode = hashParamsCurrent["edit"] === "true";
         const defaultBgColor = hashParamsCurrent["bgColor"];
         if (!inEditMode) {
           removeEditor();
         }
-
+        const widthRootCss = `calc(100% - ${editorWidth})`;
         // set up (maybe re-override globals)
         const root = document.getElementById("root");
         root.style.width = inEditMode
-          ? `calc(100% - ${editorWidth}ch)`
+          ? widthRootCss
           : "100%";
         if (defaultBgColor) {
           root.style.background = defaultBgColor;
@@ -401,48 +379,55 @@
 
         const editor = document.getElementById("editor-root");
         editor.style.width = inEditMode
-          ? `${editorWidth}ch`
+          ? `${editorWidth}`
           : "0%";
 
-        let mdContent = getMdFromUrl();
+        if (_lastMdContent === mdContent) {
+          return;
+        }
+        _lastMdContent = mdContent;
 
-        if (mdContent) {
+        // clear all children of root
+        document
+          .getElementById("root")
+          .textContent = "";
 
-          const metaframe = globalThis.metaframe;
-          // prettier-ignore
-          metaframe
-            ?.setOutput("md", mdContent);
+        // let mdContent = getMdFromUrl();
 
-          const MD = markdownit({html: true, linkify: true, typographer: true});
-          MD.use(MermaidPlugIn);
-          MD.use(SingleScreenPlugin, options || {});
-          MD.use(markdownAnchor, {
-            level: [1, 2, 3]
-          });
+        const metaframe = globalThis.metaframe;
+        // prettier-ignore
+        metaframe
+          ?.setOutput("md", mdContent);
 
-          const rules = options
-            ?.dm === 'slide'
-              ? {
+        const MD = markdownit({html: true, linkify: true, typographer: true});
+        MD.use(MermaidPlugIn);
+        MD.use(SingleScreenPlugin, options || {});
+        MD.use(markdownAnchor, {
+          level: [1, 2, 3]
+        });
 
-                table_close: () => '</table>\n</div>\n</div>',
-                table_open: () => '<div class="row"><div class="rowCellTable">\n<table>\n'
-              }
-              : {};
+        const rules = options
+          ?.dm === 'slide'
+            ? {
 
-          MD.renderer.rules = {
-            ...MD.renderer.rules,
-            ...rules
-          };
+              table_close: () => '</table>\n</div>\n</div>',
+              table_open: () => '<div class="row"><div class="rowCellTable">\n<table>\n'
+            }
+            : {};
 
-          try {
-            var result = MD.render(mdContent);
-            root.innerHTML = result;
-            Mermaid.run();
-          } catch (err) {
-            console.error(err);
-            var result = MD.render(`# Error rendering markdown \n\n - markdown: \`${mdContent}\` \n - err: ${err}`);
-            root.innerHTML = result;
-          }
+        MD.renderer.rules = {
+          ...MD.renderer.rules,
+          ...rules
+        };
+
+        try {
+          var result = MD.render(mdContent);
+          root.innerHTML = result;
+          Mermaid.run();
+        } catch (err) {
+          console.error(err);
+          var result = MD.render(`# Error rendering markdown \n\n - markdown: \`${mdContent}\` \n - err: ${err}`);
+          root.innerHTML = result;
         }
       }
 
@@ -456,6 +441,14 @@
         globalThis.metaframe = new Metaframe();
       }
       var metaframe = globalThis.metaframe;
+
+      metaframe.onInput("md", (md) => {
+        if (md) {
+          setHashParamValueBase64EncodedInWindow("md", md);
+        }
+      });
+
+      metaframe.getInputs()["md"] && setHashParamValueBase64EncodedInWindow("md", metaframe.getInputs()["md"]);
 
       metaframe
         .connected()
