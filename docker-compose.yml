@@ -1,7 +1,6 @@
 version: "2.4"
 
 services:
-
   worker:
     build:
       context: ./worker
@@ -72,25 +71,23 @@ services:
 
   traefik:
     image: "traefik:v2.10.7"
-    container_name: "traefik-connect-metaframe-js"
+    container_name: "traefik-connect-metaframe-mdv2"
     labels:
-     - "traefik.enable=true"
-     - "traefik.http.routers.traefik=true"
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik=true"
     ports:
       # HTTPS / SSL port
       - "${APP_PORT:-443}:443"
       # The Traefik Web UI port (enabled by api:insecure: true in traefik.yml)
       - "${TRAEFIK_WEB_UI_PORT:-8080}:8080"
     volumes:
-     - ./.traefik/traefik.yml:/etc/traefik/traefik.yml:ro
-     - ./.traefik/config.yml:/etc/traefik/config.yml:ro
-     - ./.traefik/certs:/etc/certs:ro
-     - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./.traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./.traefik/config.yml:/etc/traefik/config.yml:ro
+      - ./.traefik/certs:/etc/certs:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
 
 volumes:
   deno:
     driver: local
   node_modules:
     driver: local
-
-

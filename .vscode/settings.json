@@ -10,6 +10,7 @@
     },
     "files.watcherExclude": {
         "**/deploy": true
-    }
+    },
+    "prettier.prettierPath": "editor/node_modules/prettier/"
 
 }

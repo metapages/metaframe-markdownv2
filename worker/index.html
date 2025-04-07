@@ -408,6 +408,11 @@
 
         if (mdContent) {
 
+          const metaframe = globalThis.metaframe;
+          // prettier-ignore
+          metaframe
+            ?.setOutput("md", mdContent);
+
           const MD = markdownit({html: true, linkify: true, typographer: true});
           MD.use(MermaidPlugIn);
           MD.use(SingleScreenPlugin, options || {});
@@ -430,7 +435,6 @@
           };
 
           try {
-
             var result = MD.render(mdContent);
             root.innerHTML = result;
             Mermaid.run();
