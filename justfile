@@ -15,7 +15,14 @@ magenta                            := "\\e[35m"
 grey                               := "\\e[90m"
 
 @_help:
-    just --list --unsorted
+    echo -e ""
+    just --list --unsorted --list-heading $'🤖 Commands:\n\n'
+    echo -e ""
+    echo -e "    Publish URL 🔗 {{green}}https://markdownv2.mtfm.io{{normal}}"
+    echo -e "    Github  URL 🔗 {{green}}$(cat editor/package.json | jq -r '.repository.url'){{normal}}"
+    echo -e "    Develop URL 🔗 {{green}}https://{{APP_FQDN}}:{{APP_PORT}}/{{normal}}"
+    echo -e ""
+
 
 # open
 # Run the server in development mode
