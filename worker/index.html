@@ -570,7 +570,7 @@
 
       const [_, hashParamOnce] = getUrlHashParamsFromHashString(window.location.hash);
       const inEditModeOnce = hashParamOnce["edit"] === "true";
-      if (inEditModeOnce || !getMdFromUrl()) {
+      if (inEditModeOnce) {
         // if editing, force showing the menu
         window.addEventListener("load", () => {
           onMenuClick();
