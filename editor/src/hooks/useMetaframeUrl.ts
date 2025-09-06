@@ -9,29 +9,29 @@ import {
   useHashParamBase64,
   useHashParamJson,
 } from "@metapages/hash-query/react-hooks";
-import { MetaframeDefinitionV1 } from "@metapages/metapage";
+import { MetaframeDefinitionV2 } from "@metapages/metapage";
 
 export const useMetaframeUrl = () => {
   const [url, setUrl] = useState<string>();
   const [code] = useHashParamBase64("md");
   const [config] = useHashParamJson<ConfigOptions>("c");
-  const [metaframeDef] = useHashParamJson<MetaframeDefinitionV1>("definition");
+  const [metaframeDef] = useHashParamJson<MetaframeDefinitionV2>("definition");
   const [modules] = useHashParamJson<string[]>("modules");
 
   // update the url
   useEffect(() => {
-    let href = window.location.href;
+    let url = new URL(window.location.href);
     if (metaframeDef) {
-      href = setHashParamValueJsonInUrl(href, "definition", metaframeDef);
+      url = setHashParamValueJsonInUrl(url, "definition", metaframeDef);
     }
     if (modules) {
-      href = setHashParamValueJsonInUrl(href, "modules", modules);
+      url = setHashParamValueJsonInUrl(url, "modules", modules);
     }
     if (config) {
-      href = setHashParamValueJsonInUrl(href, "c", config);
+      url = setHashParamValueJsonInUrl(url, "c", config);
     }
 
-    const url = new URL(href);
+    
 
     // I am not sure about this anymore
     url.pathname = "";
