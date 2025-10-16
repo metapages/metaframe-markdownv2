@@ -2,18 +2,22 @@ import React, { useCallback, useRef } from "react";
 
 import { useMetaframeUrl } from "/@/hooks/useMetaframeUrl";
 import { useOptions } from "/@/hooks/useOptions";
-import stringify from "safe-stable-stringify";
 import debounce from "debounce";
 
-import { useHashParamBase64 } from "@metapages/hash-query/react-hooks";
+import {
+  blobToBase64String,
+  setHashParamValueInUrl,
+  setHashParamValueJsonInUrl,
+  useHashParamBase64,
+} from "@metapages/hash-query/react-hooks";
 import { MetaframeInputMap } from "@metapages/metapage";
 import { MetaframeStandaloneComponent } from "@metapages/metapage-react";
 
-export const encodeOptions = (options: any): string => {
-  const text: string = stringify(options) || "";
-  const b64 = btoa(encodeURIComponent(text));
-  return b64;
-};
+// export const encodeOptions = (options: any): string => {
+//   const text: string = stringify(options) || "";
+//   const b64 = btoa(encodeURIComponent(text));
+//   return b64;
+// };
 
 export const PanelCode: React.FC = () => {
   const [code, setCode] = useHashParamBase64("md");
@@ -31,14 +35,18 @@ const LocalEditor: React.FC<{
   const inputs = useRef<{ text: string }>({ text: codeInternal.current });
 
   const urlWithOptions = () => {
-    const options = encodeOptions({
+    const options = blobToBase64String({
       autosend: true,
       hidemenuififrame: true,
       mode: "markdown",
       theme: themeOptions?.theme || "vs-light",
       hideLineNumbers: true,
     });
-    return `https://editor.mtfm.io/#?hm=disabled&options=${options}`;
+    let url = new URL("https://editor.mtfm.io");
+    url = setHashParamValueJsonInUrl(url, "options", options);
+    url = setHashParamValueInUrl(url, "hm", "disabled");
+
+    return url.href;
   };
 
   const onCodeOutputsUpdate = useCallback(
