@@ -5,7 +5,6 @@ import { useOptions } from "/@/hooks/useOptions";
 import debounce from "debounce";
 
 import {
-  blobToBase64String,
   setHashParamValueInUrl,
   setHashParamValueJsonInUrl,
   useHashParamBase64,
@@ -13,11 +12,8 @@ import {
 import { MetaframeInputMap } from "@metapages/metapage";
 import { MetaframeStandaloneComponent } from "@metapages/metapage-react";
 
-// export const encodeOptions = (options: any): string => {
-//   const text: string = stringify(options) || "";
-//   const b64 = btoa(encodeURIComponent(text));
-//   return b64;
-// };
+// Debounce delay (ms) for updating markdown after editor changes
+const DEBOUNCE_DELAY_MS = 100;
 
 export const PanelCode: React.FC = () => {
   const [code, setCode] = useHashParamBase64("md");
@@ -35,15 +31,14 @@ const LocalEditor: React.FC<{
   const inputs = useRef<{ text: string }>({ text: codeInternal.current });
 
   const urlWithOptions = () => {
-    const options = blobToBase64String({
+    let url = new URL("https://editor.mtfm.io");
+    url = setHashParamValueJsonInUrl(url, "options", {
       autosend: true,
       hidemenuififrame: true,
       mode: "markdown",
       theme: themeOptions?.theme || "vs-light",
       hideLineNumbers: true,
     });
-    let url = new URL("https://editor.mtfm.io");
-    url = setHashParamValueJsonInUrl(url, "options", options);
     url = setHashParamValueInUrl(url, "hm", "disabled");
 
     return url.href;
@@ -52,7 +47,7 @@ const LocalEditor: React.FC<{
   const onCodeOutputsUpdate = useCallback(
     debounce((outputs: MetaframeInputMap) => {
       setCode(outputs.text);
-    }, 100),
+    }, DEBOUNCE_DELAY_MS),
     [setCode],
   );
 
