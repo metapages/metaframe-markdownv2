@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:editor.mtfm.io)",
+      "Bash(gh search:*)",
+      "Bash(gh api:*)",
+      "Bash(node -e:*)",
+      "Bash(just test:*)"
+    ]
+  }
+}

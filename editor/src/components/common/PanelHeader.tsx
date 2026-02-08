@@ -6,7 +6,6 @@ import { PanelHeaderContainer } from "/@/components/common/PanelHeaderContainer"
 
 interface PanelHeaderProps {
   title: string;
-  onSave?: () => void;
   preserveCase?: boolean;
 }
 
