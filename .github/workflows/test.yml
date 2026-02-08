@@ -10,13 +10,28 @@ on:
 jobs:
   test:
     name: Test
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
 
     steps:
       - name: Clone repo
         uses: actions/checkout@v4
         with:
           fetch-depth: '0'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "23.5.0"
+
+      - name: Setup Just CLI
+        uses: extractions/setup-just@v1
+        with:
+          just-version: "1.35.0"
+
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: "2.5.3"
 
       - name: test
         run: just test
