@@ -1,14 +1,11 @@
-import { oakCors } from "https://deno.land/x/cors@v1.2.2/mod.ts";
-import {
-  Application,
-  Context,
-  Router,
-} from "https://deno.land/x/oak@v10.2.0/mod.ts";
-import staticFiles from "https://deno.land/x/static_files@1.1.6/mod.ts";
+import { Hono } from "@hono/hono";
+import type { Context } from "@hono/hono";
+import { cors } from "@hono/hono/cors";
+import { serveStatic } from "@hono/hono/deno";
 import {
   MetaframeDefinitionV2,
   MetaframeVersionCurrent,
-} from "https://esm.sh/@metapages/metapage@1.8.18";
+} from "https://esm.sh/@metapages/metapage@1.10.11";
 
 const port: number = parseInt(Deno.env.get("PORT") || "3000");
 
@@ -28,53 +25,37 @@ const DEFAULT_METAFRAME_DEFINITION_STRING = JSON.stringify(
   2
 );
 
-// const certFile = "../.certs/server1.localhost.pem",
-//   keyFile = "../.certs/server1.localhost-key.pem";
+const app = new Hono();
 
-const router = new Router();
+app.use("*", cors({ origin: "*" }));
 
 const serveIndex = async (ctx: Context) => {
   const indexHtml = await Deno.readTextFile("./index.html");
-  ctx.response.body = indexHtml;
+  return ctx.html(indexHtml);
 };
 
-router.get("/", serveIndex);
-router.get("/index.html", serveIndex);
-router.get("/metaframe.json", (ctx: Context) => {
-  ctx.response.headers.set("Content-Type", "application/json");
-  ctx.response.body = DEFAULT_METAFRAME_DEFINITION_STRING;
+app.get("/", serveIndex);
+app.get("/index.html", serveIndex);
+app.get("/metaframe.json", (ctx: Context) => {
+  return ctx.body(DEFAULT_METAFRAME_DEFINITION_STRING, 200, {
+    "Content-Type": "application/json",
+  });
 });
-// After creating the router, we can add it to the app.
 
-const app = new Application();
-app.addEventListener("listen", ({ hostname, port, secure }) => {
-  console.log(
-    `🚀 Listening on: ${secure ? "https://" : "http://"}${
-      hostname ?? "localhost"
-    }:${port}`
-  );
-});
-app.use(oakCors({ origin: "*" }));
+// The built client, copied into ./editor by `just _stage`
+app.use("/editor/*", serveStatic({ root: "./" }));
 
+// Everything else falls through to ./public, served from the root path
 app.use(
-  staticFiles("editor", {
-    prefix: "/editor",
-    setHeaders: (headers: Headers) => {
-      headers.set("Access-Control-Allow-Origin", "*");
-    },
-  })
+  "/*",
+  serveStatic({
+    root: "./",
+    rewriteRequestPath: (path) => `/public${path}`,
+  }),
 );
 
-app.use(
-  staticFiles("public", {
-    // prefix: "/editor",
-    setHeaders: (headers: Headers) => {
-      headers.set("Access-Control-Allow-Origin", "*");
-    },
-  })
-);
-app.use(router.routes());
-app.use(router.allowedMethods());
-
-// await app.listen({ port, certFile, keyFile });
-await app.listen({ port });
+console.log(`🚀 Listening on: http://localhost:${port}`);
+// Deno Deploy binds `Deno.serve` to its own socket, so this port only applies
+// locally. The previous oak stack used Deno.listen/Deno.serveHttp, which Deploy
+// does NOT intercept: the app came up on :3000 but warm-up could never reach it.
+Deno.serve({ port }, app.fetch);

@@ -1,5 +1,7 @@
 # deno not node because long-term deno will be used for all non-trivial scripting
-FROM denoland/deno:alpine-1.38.3
+# Must stay on Deno 2.x to match CI and Deno Deploy: server.ts imports `jsr:@hono/hono`,
+# and jsr: specifiers are unsupported before Deno 1.42.
+FROM denoland/deno:alpine-2.9.4
 
 RUN apk --no-cache --update add \
     bash \

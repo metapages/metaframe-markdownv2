@@ -18,9 +18,10 @@ grey                               := "\\e[90m"
     echo -e ""
     just --list --unsorted --list-heading $'🤖 Commands:\n\n'
     echo -e ""
-    echo -e "    Publish URL 🔗 {{green}}https://markdownv2.mtfm.io{{normal}}"
-    echo -e "    Github  URL 🔗 {{green}}$(cat editor/package.json | jq -r '.repository.url'){{normal}}"
-    echo -e "    Develop URL 🔗 {{green}}https://{{APP_FQDN}}:{{APP_PORT}}/{{normal}}"
+    echo -e "    Publish URL 🔗        {{green}}https://markdownv2.mtfm.io{{normal}}"
+    echo -e "    Github  URL 🔗        {{green}}$(cat editor/package.json | jq -r '.repository.url'){{normal}}"
+    echo -e "    Develop URL 🔗        {{green}}https://{{APP_FQDN}}:{{APP_PORT}}/{{normal}}"
+    echo -e "    Deploy Console URL 🔗 {{green}}https://console.deno.com/metapage/metaframe-markdown{{normal}}"
     echo -e ""
 
 
@@ -43,19 +44,70 @@ grey                               := "\\e[90m"
 open:
   deno run --allow-all --unstable https://deno.land/x/metapages@v0.0.17/exec/open_url.ts 'https://metapages.github.io/load-page-when-available/?url=https://{{APP_FQDN}}:{{APP_PORT}}'
 
-publish: _ensure_deployctl
+alias publish := deploy
+
+# Build the client and assemble the deployable bundle in DEST.
+# DEST is deliberately outside the repo: `deno deploy` honours .gitignore, so
+# staging into an ignored in-repo dir silently uploads nothing.
+_stage DEST:
   #!/usr/bin/env bash
   set -euo pipefail
   # build the client in editor/dist
   just editor/build
-  rm -rf deploy
-  mkdir -p deploy
-  cp -r editor/dist deploy/editor
-  cp -r worker/server.ts deploy/
-  cp -r worker/index.html deploy/
-  cp -r worker/public deploy/
-  cd deploy
-  deployctl deploy --project=metaframe-mdv2 --prod server.ts
+  cp -r editor/dist {{DEST}}/editor
+  cp -r worker/server.ts {{DEST}}/
+  cp -r worker/deno.json {{DEST}}/
+  cp -r worker/deno.lock {{DEST}}/
+  cp -r worker/index.html {{DEST}}/
+  cp -r worker/public {{DEST}}/
+
+# deno deploy to markdownv2.mtfm.io (app: metapage/metaframe-markdown)
+deploy:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  deploy=$(mktemp -d)
+  just _stage $deploy
+  cd $deploy
+  # Keep the log out of $deploy: everything in there gets uploaded.
+  log=$(mktemp)
+  # `deno deploy` (jsr:@deno/deploy) intermittently hangs mid-upload and is then
+  # killed by Deno's top-level-await watchdog with exit 1, even when nothing is
+  # wrong. Deploys create a fresh revision each time, so retry and treat the run
+  # as successful only when the CLI prints its genuine confirmation line.
+  attempts=3
+  for i in $(seq 1 $attempts); do
+    echo -e "{{blue}}deno deploy attempt $i/$attempts{{normal}}"
+    set +e
+    timeout 420 deno deploy --prod 2>&1 | tee $log
+    code=${PIPESTATUS[0]}
+    set -e
+    if grep -q "Successfully deployed your application" $log; then
+      echo -e "{{green}}Deploy succeeded.{{normal}}"
+      exit 0
+    fi
+    echo -e "{{yellow}}Deploy attempt $i did not confirm success (exit $code); retrying...{{normal}}"
+    sleep 5
+  done
+  echo -e "{{magenta}}Deploy failed after $attempts attempts.{{normal}}"
+  exit 1
+
+# ONE-TIME: register metapage/metaframe-markdown on Deno Deploy, then use `just deploy`
+create-app:
+  #!/usr/bin/env bash
+  set -euo pipefail
+  # --do-not-use-detected-build-config is required: auto-detection sees index.html at the
+  # bundle root and would create a *static* app, never running server.ts.
+  deploy=$(mktemp -d)
+  just _stage $deploy
+  cd $deploy
+  deno deploy create \
+    --org metapage \
+    --app metaframe-markdown \
+    --source local \
+    --do-not-use-detected-build-config \
+    --runtime-mode dynamic \
+    --entrypoint server.ts \
+    --region global
 
 # Checks and tests
 @test:
@@ -66,8 +118,4 @@ publish: _ensure_deployctl
 clean:
     just editor/clean
     rm -rf .traefik/certs
-    rm -rf deploy
     docker compose down -v
-
-@_ensure_deployctl:
-    if ! command -v deployctl &> /dev/null; then echo '‼️ deployctl is being installed ‼️'; deno install -gArf jsr:@deno/deployctl; fi

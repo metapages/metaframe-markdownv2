@@ -1,0 +1,12 @@
+{
+  "deploy": {
+    "org": "metapage",
+    "app": "metaframe-markdown"
+  },
+  "tasks": {
+    "dev": "deno run --watch -A server.ts"
+  },
+  "imports": {
+    "@hono/hono": "jsr:@hono/hono@^4"
+  }
+}
