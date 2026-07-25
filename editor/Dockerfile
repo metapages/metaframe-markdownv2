@@ -1,5 +1,5 @@
 # deno not node because long-term deno will be used for all non-trivial scripting
-FROM denoland/deno:alpine-1.38.3
+FROM denoland/deno:alpine-2.9.4
 
 RUN apk --no-cache --update add \
     bash \

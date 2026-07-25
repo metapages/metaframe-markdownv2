@@ -1,0 +1,20 @@
+{
+  "version": "5",
+  "specifiers": {
+    "jsr:@hono/hono@4": "4.7.6"
+  },
+  "jsr": {
+    "@hono/hono@4.7.6": {
+      "integrity": "407da752c13d4644bb9d363f8349db7542e21abc3db8c13ca90cf69d8ab675ad"
+    }
+  },
+  "remote": {
+    "https://esm.sh/@metapages/metapage@1.10.11": "400984f8e237bc192703f823d13a6d7dfbfb5ed5210257a6b7d7d10d2e28b433",
+    "https://esm.sh/@metapages/metapage@1.10.11/denonext/metapage.mjs": "96ecf1489008301df6f9546f23755ce22a8f688c94fdb8597d3f3263b200eb9c"
+  },
+  "workspace": {
+    "dependencies": [
+      "jsr:@hono/hono@4"
+    ]
+  }
+}

@@ -1,10 +1,8 @@
-version: "2.4"
-
 services:
   worker:
     build:
       context: ./worker
-    # image: denoland/deno:alpine-1.38.3
+    # image: denoland/deno:alpine-2.9.4
     command: deno run -A --watch ./server.ts
     working_dir: /app/worker
     healthcheck:
@@ -70,7 +68,11 @@ services:
       - traefik.http.routers.app-editor.rule=Host("${APP_FQDN:-server1.localhost}") && PathPrefix(`/editor`)
 
   traefik:
-    image: "traefik:v2.10.7"
+    # Must stay >= v2.11: v2.10's docker provider negotiates API v1.24, which modern
+    # Docker daemons reject (minimum v1.40). It then discovers no containers and every
+    # route 404s. Staying on v2.x keeps the Host("...") rule syntax used above; v3
+    # requires backticks.
+    image: "traefik:v2.11.53"
     container_name: "traefik-connect-metaframe-mdv2"
     labels:
       - "traefik.enable=true"
