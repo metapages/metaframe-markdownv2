@@ -4,6 +4,7 @@
   <head>
     <meta charset="utf-8"/>
     <base target="_parent"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
     <title>Metaframe Markdown</title>
     <style>
       body,
@@ -54,6 +55,38 @@
         padding: 8px;
       }
 
+      @media (max-width: 768px) {
+        #menu-button {
+          width: 120px;
+          height: 52px;
+          font-size: 18px;
+          left: calc(100vw - 132px);
+          top: 8px;
+          border-radius: 8px;
+          padding: 12px;
+          gap: 8px;
+        }
+
+        #menu-button svg {
+          width: 24px;
+          height: 24px;
+        }
+
+        .editor-container-shown {
+          width: 100vw !important;
+          max-width: 100vw !important;
+        }
+
+        .root-with-editor {
+          display: none !important;
+        }
+
+        /* Editor is full-width on mobile, so there is no boundary to drag. */
+        #editor-resize-handle {
+          display: none !important;
+        }
+      }
+
       .editor-container-hidden {
         position: absolute;
         display: flex;
@@ -77,6 +110,7 @@
         width: 100%;
         max-width: 100%;
         height: 100%;
+        overflow: auto;
       }
 
       .root-with-editor {
@@ -85,7 +119,8 @@
         height: 100vh;
         max-height: 100vh;
         z-index: 2;
-        overflow: hidden;
+        /* Long documents must still scroll while the editor is open */
+        overflow: auto;
         max-width: calc(100vw - 10ch);
         min-width: 0;
       }
@@ -178,12 +213,77 @@
         opacity: 1;
         /* Make the element fully opaque (visible) when hovered */
       }
+
+      /**
+       * Draggable divider between the rendered output (#root) and the editor
+       * pane (#editor-root). It sits on the boundary — its `right` offset is kept
+       * in sync with the editor width in JS. This is also the escape hatch when
+       * the editor is set too narrow to reach the width setting: the strip is
+       * always grabbable regardless of how narrow the editor is.
+       */
+      #editor-resize-handle {
+        position: absolute;
+        top: 0;
+        height: 100vh;
+        width: 10px;
+        z-index: 4;
+        cursor: col-resize;
+        display: none;
+        background: transparent;
+        /* `right` is set in JS to match the current editor width */
+      }
+
+      #editor-resize-handle::after {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        height: 100%;
+        width: 1px;
+        background: #d0d0d0;
+        transition: background 0.15s, width 0.15s;
+      }
+
+      /* Little horizontal caps at the very top and bottom that close the gap
+         between the divider's vertical line (this handle's center) and the
+         editor pane's left border (this handle's right edge). A single box
+         spanning that gap with only top/bottom borders draws both caps. */
+      #editor-resize-handle::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        right: 0;
+        height: 100%;
+        border-top: 1px solid #d0d0d0;
+        border-bottom: 1px solid #d0d0d0;
+        pointer-events: none;
+      }
+
+      #editor-resize-handle:hover::after,
+      #editor-resize-handle.dragging::after {
+        background: #2563eb;
+        width: 3px;
+      }
+
+      /* While dragging: show the resize cursor everywhere and stop the editor
+         iframe / output from swallowing the mousemove events. */
+      body.resizing {
+        cursor: col-resize;
+        user-select: none;
+      }
+
+      body.resizing #editor-root,
+      body.resizing #root {
+        pointer-events: none;
+      }
     </style>
     <script src=" https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js "></script>
   </head>
 
   <body>
-    <button id="menu-button">
+    <button id="menu-button" class="invisible-until-hover">
       <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="#818382" viewbox="0 0 256 256">
         <path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"></path>
       </svg>
@@ -192,6 +292,10 @@
 
     <div id="root" class="root borderFatSolidGreen transparent"></div>
     <div id="editor-root" class="editor-container-hidden borderDashedPurple transparent"></div>
+
+    <!-- Draggable divider between the output and the editor pane. Hidden until
+         edit mode; positioned/shown by applyEditorLayout(). -->
+    <div id="editor-resize-handle"></div>
 
     <script type="module">
       import {
@@ -206,7 +310,15 @@
         stringFromBase64String
       } from "https://cdn.jsdelivr.net/npm/@metapages/hash-query@0.10.0";
       import {Metapage, Metaframe, isIframe} from "https://cdn.jsdelivr.net/npm/@metapages/metapage@1.10.11";
-      import Mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
+      // Mermaid's own ESM build, NOT jsdelivr's `/+esm` transform (nor esm.sh).
+      // Those re-bundlers duplicate mermaid's internal config module, so
+      // `initialize({securityLevel: "loose"})` lands on one copy while the
+      // flowchart parser reads another that is still at the default "strict".
+      // Its setClickFun() then bails on the securityLevel guard, and `click X
+      // handleClick` directives silently never bind — nodes get the "clickable"
+      // class but no listener. Keep this URL identical to the one in
+      // markdown-plugins/mermaid/index.js so both share one module instance.
+      import Mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.esm.min.mjs';
       import {MermaidPlugIn} from './markdown-plugins/mermaid/index.js';
       import SingleScreenPlugin from './markdown-plugins/single-screen/index.js';
       import markdownAnchor from 'https://cdn.jsdelivr.net/npm/markdown-it-anchor@9.2.0/+esm';
@@ -219,6 +331,34 @@
       //   h?: string;
       // };
       const options = getHashParamValueJsonFromWindow("options") || {};
+
+      const MAX_LOG_ELEMENTS = 1000;
+      let logScrollRafPending = false;
+      const scheduleLogScroll = (el) => {
+        if (logScrollRafPending)
+          return;
+        logScrollRafPending = true;
+        requestAnimationFrame(() => {
+          logScrollRafPending = false;
+          el.scrollTop = el.scrollHeight;
+        });
+      };
+
+      const appendLogElement = (s, className) => {
+        const root = document.getElementById("root");
+        const pre = document.createElement("pre");
+        pre.textContent = s;
+        pre.className = className;
+        root.appendChild(pre);
+        while (root.children.length > MAX_LOG_ELEMENTS) {
+          root.removeChild(root.firstChild);
+        }
+        scheduleLogScroll(root);
+      };
+
+      globalThis.logStdout = (s) => appendLogElement(s, "pre-stdout");
+      globalThis.log = globalThis.logStdout;
+      globalThis.logStderr = (s) => appendLogElement(s, "pre-stderr");
 
       const refreshUpdateSvgButton = () => {
         // only show the edit button if we are NOT in an iframe
@@ -345,47 +485,235 @@
         setHashParamValueBase64EncodedInWindow("md", m);
       };
 
+      // The id used to tag the injected <style>/<link> so we can find/replace/
+      // remove it when the `css` hash param changes.
+      const CSS_HASH_PARAM_ELEMENT_ID = "mtfm-css-hash-param";
+
+      // A decoded value is treated as a stylesheet URL (injected as <link>) when
+      // it is a single-line http(s) URL; otherwise it is raw CSS text (<style>).
+      const isCssStylesheetUrl = (value) => {
+        const trimmed = value.trim();
+        return /^https?:\/\/\S+$/.test(trimmed) && !/\s/.test(trimmed);
+      };
+
+      // Loads a global stylesheet from the transient `css` hash param. The value
+      // is base64-encoded and is either raw CSS text or a URL to a stylesheet.
+      //
+      // This param is intentionally NOT in the canonical/allowed hash param
+      // lists, so it is never persisted into the metaframe definition or copied
+      // external links. It is appended at runtime to restyle the rendered
+      // markdown without modifying its content.
+      const applyCssFromUrl = () => {
+        // Always remove any previously injected element first so changing or
+        // clearing the param fully replaces the prior stylesheet.
+        document
+          .getElementById(CSS_HASH_PARAM_ELEMENT_ID)
+          ?.remove();
+
+        const css = getHashParamValueBase64DecodedFromWindow("css");
+        if (!css)
+          return;
+
+        let element;
+        if (isCssStylesheetUrl(css)) {
+          element = document.createElement("link");
+          element.rel = "stylesheet";
+          element.href = css.trim();
+        } else {
+          element = document.createElement("style");
+          element.textContent = css;
+        }
+        element.id = CSS_HASH_PARAM_ELEMENT_ID;
+        document
+          .head
+          .appendChild(element);
+      };
+
+      // Resolve the effective editor width from the parsed hash params, applying
+      // the "80ch" default and the bare-number -> ch coercion.
+      const getEditorWidthFromParams = (hashParams) => {
+        let editorWidth = hashParams["editorWidth"] || "80ch";
+        // If the last character is a number, assume 'ch' units.
+        if (/\d$/.test(editorWidth)) {
+          editorWidth = `${editorWidth}ch`;
+        }
+        return editorWidth;
+      };
+
+      // Apply the output/editor split widths and position the resize handle.
+      // Pure layout: safe to call on any hashchange without re-rendering.
+      const applyEditorLayout = () => {
+        const [, hashParams] = getUrlHashParamsFromHashString(window.location.hash);
+        const inEditMode = hashParams["edit"] === "true";
+        const editorWidth = getEditorWidthFromParams(hashParams);
+
+        const root = document.getElementById("root");
+        const editor = document.getElementById("editor-root");
+        const handle = document.getElementById("editor-resize-handle");
+
+        root.style.width = inEditMode
+          ? `calc(100% - ${editorWidth})`
+          : "100%";
+        editor.style.width = inEditMode
+          ? `${editorWidth}`
+          : "0%";
+        if (handle) {
+          if (inEditMode) {
+            handle.style.right = editorWidth;
+            handle.style.display = "block";
+          } else {
+            handle.style.display = "none";
+          }
+        }
+      };
+
+      // Wire up drag-to-resize on the divider. The editor pane is pinned to the
+      // right edge, so its width is (viewport width - pointer x). Live updates
+      // are written straight to the inline styles for smoothness; the final width
+      // is persisted to the `editorWidth` hash param on release.
+      const setupEditorResizeHandle = () => {
+        const handle = document.getElementById("editor-resize-handle");
+        if (!handle)
+          return;
+
+        const MIN_WIDTH_PX = 120;
+
+        const widthFromPointer = (clientX) => {
+          const max = window.innerWidth - 80; // always leave some output visible
+          const px = window.innerWidth - clientX;
+          return Math.max(MIN_WIDTH_PX, Math.min(max, px));
+        };
+
+        const applyWidthPx = (px) => {
+          const root = document.getElementById("root");
+          const editor = document.getElementById("editor-root");
+          root.style.width = `calc(100% - ${px}px)`;
+          editor.style.width = `${px}px`;
+          handle.style.right = `${px}px`;
+        };
+
+        const onMove = (e) => {
+          e.preventDefault();
+          applyWidthPx(widthFromPointer(e.clientX));
+        };
+
+        const onUp = (e) => {
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+          document
+            .body
+            .classList
+            .remove("resizing");
+          handle
+            .classList
+            .remove("dragging");
+          const px = widthFromPointer(e.clientX);
+          applyWidthPx(px);
+          // Persist. Uses a 'px' suffix so the value is not re-coerced to 'ch'.
+          setHashParamInWindow("editorWidth", `${Math.round(px)}px`);
+        };
+
+        handle.addEventListener("mousedown", (e) => {
+          // Only the primary button starts a resize.
+          if (e.button !== 0)
+            return;
+          e.preventDefault();
+          document
+            .body
+            .classList
+            .add("resizing");
+          handle
+            .classList
+            .add("dragging");
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup", onUp);
+        });
+      };
+      setupEditorResizeHandle();
+
+      // Markdown derived from the `mermaid`/`mermaid-base64` inputs. This is
+      // transient piped content, so unlike the `md` input it is deliberately NOT
+      // written to the url hash: the diagram is regenerated by the upstream
+      // metaframe on every connect, and persisting it would both bloat the url
+      // and leave a stale diagram behind after disconnecting.
+      let _mermaidMarkdown = null;
+
       const runmdFromUrl = async () => {
+        // A live mermaid input wins over the hash. It has no hash representation,
+        // so neither the initial "load" render nor a later hashchange (e.g. the
+        // `edit`/`editorWidth` params changing) may blank it out.
+        if (_mermaidMarkdown !== null) {
+          await runOnMarkdown(_mermaidMarkdown);
+          return;
+        }
         let mdContent = getMdFromUrl();
         await runOnMarkdown(mdContent);
       }
 
-      const runmdFromInputs = async () => {
-        await runOnMarkdown(metaframe.getInput("md"));
-      }
+      // Wrap a bare mermaid graph definition so the markdown-it mermaid plugin
+      // picks it up as a diagram fence. Empty/absent means "no mermaid input".
+      const mermaidToMarkdown = (diagram) => diagram
+        ? "```mermaid\n" + diagram + "\n```"
+        : null;
+
+      const mermaidBase64ToMarkdown = (b64) => {
+        if (!b64) {
+          return null;
+        }
+        try {
+          return mermaidToMarkdown(stringFromBase64String(b64));
+        } catch (err) {
+          return `# Error decoding base64 metaframe input\n\n - key: \`mermaid-base64\`\n - value: ${b64}\n - err: ${err}`;
+        }
+      };
 
       let _lastMdContent = null;
-      const runOnMarkdown = async (mdContent) => {
+      // Renders are serialized. Mermaid.run() scans and mutates the container it
+      // finds in the live document, so two overlapping renders race: the second
+      // clears #root while the first is still rendering into it, and mermaid
+      // finishes by writing an svg that holds only its <style> and no diagram.
+      let _renderChain = Promise.resolve();
+
+      const runOnMarkdown = (mdContent) => {
+        // Claim the content synchronously. renderMarkdown awaits module loading
+        // before it could do this itself, which is long enough for two callers
+        // with identical content (the "load" handler and an arriving `md`/
+        // `mermaid` input) to both get past the check and render twice.
+        const isNewContent = _lastMdContent !== mdContent;
+        if (isNewContent) {
+          _lastMdContent = mdContent;
+        }
+        _renderChain = _renderChain
+          .then(() => renderMarkdown(mdContent, isNewContent))
+          .catch((err) => console.error(err));
+        return _renderChain;
+      };
+
+      // `isNewContent` false still re-applies layout/background: hashchange fires
+      // for `edit`/`editorWidth`/`bgColor` without the markdown itself changing.
+      const renderMarkdown = async (mdContent, isNewContent) => {
 
         // ensure all modules are loaded
         await Promise.all(window.__metaframeMdAwaiting);
 
         const [___, hashParamsCurrent] = getUrlHashParamsFromHashString(window.location.hash);
-        const editorWidth = hashParamsCurrent["editorWidth"] || "80ch";
         const inEditMode = hashParamsCurrent["edit"] === "true";
         const defaultBgColor = hashParamsCurrent["bgColor"];
         if (!inEditMode) {
           removeEditor();
         }
-        const widthRootCss = `calc(100% - ${editorWidth})`;
         // set up (maybe re-override globals)
         const root = document.getElementById("root");
-        root.style.width = inEditMode
-          ? widthRootCss
-          : "100%";
         if (defaultBgColor) {
           root.style.background = defaultBgColor;
         }
 
-        const editor = document.getElementById("editor-root");
-        editor.style.width = inEditMode
-          ? `${editorWidth}`
-          : "0%";
+        // Apply the output/editor split widths (also positions the resize handle).
+        applyEditorLayout();
 
-        if (_lastMdContent === mdContent) {
+        if (!isNewContent) {
           return;
         }
-        _lastMdContent = mdContent;
 
         // clear all children of root
         document
@@ -423,7 +751,8 @@
         try {
           var result = MD.render(mdContent);
           root.innerHTML = result;
-          Mermaid.run();
+          // Awaited so the next queued render cannot start mid-diagram.
+          await Mermaid.run();
         } catch (err) {
           console.error(err);
           var result = MD.render(`# Error rendering markdown \n\n - markdown: \`${mdContent}\` \n - err: ${err}`);
@@ -442,21 +771,66 @@
       }
       var metaframe = globalThis.metaframe;
 
+      // Mermaid `click <node> handleClick` directives (enabled by the plugin's
+      // securityLevel: "loose") call this global with the clicked node id.
+      // Forwarding it as the `click` output is what makes piped diagrams
+      // clickable, e.g. app.metapage.io's metapage/connections graphs.
+      // Must exist before the first Mermaid.run() so the callbacks bind.
+      globalThis.handleClick = (nodeClickText) => {
+        globalThis
+          .metaframe
+          ?.setOutput("click", nodeClickText);
+      };
+
       metaframe.onInput("md", (md) => {
         if (md) {
           setHashParamValueBase64EncodedInWindow("md", md);
         }
       });
 
-      metaframe.getInputs()["md"] && setHashParamValueBase64EncodedInWindow("md", metaframe.getInputs()["md"]);
+      // A bare mermaid graph definition, rendered as a diagram.
+      metaframe.onInput("mermaid", (diagram) => {
+        _mermaidMarkdown = mermaidToMarkdown(diagram);
+        runmdFromUrl();
+      });
+
+      metaframe.onInput("mermaid-base64", (b64) => {
+        _mermaidMarkdown = mermaidBase64ToMarkdown(b64);
+        runmdFromUrl();
+      });
+
+      const initialInputs = metaframe.getInputs();
+      initialInputs["md"] && setHashParamValueBase64EncodedInWindow("md", initialInputs["md"]);
+      // Inputs already present at construction never fire onInput, so seed from
+      // them too. Rendering is driven by the load/hashchange handlers below,
+      // which now consult _mermaidMarkdown first.
+      _mermaidMarkdown = mermaidToMarkdown(initialInputs["mermaid"]) ||
+        mermaidBase64ToMarkdown(initialInputs["mermaid-base64"]);
 
       metaframe
         .connected()
         .then(() => metaframe.log("connected"));
 
-      globalThis.addEventListener("load", runmdFromUrl);
+      // Apply the transient `css` hash param stylesheet on initial load.
+      applyCssFromUrl();
+
+      // Handle Safari timing issue: check if the page is already loaded, or the
+      // "load" event will have fired before this listener is registered.
+      if (document.readyState === "complete") {
+        runmdFromUrl();
+      } else {
+        globalThis.addEventListener("load", runmdFromUrl);
+      }
+
       // reload on hash changes
-      globalThis.addEventListener("hashchange", runmdFromUrl, false);
+      globalThis.addEventListener("hashchange", () => {
+        // Apply the transient `css` param on every hash change. Re-rendering is
+        // skipped by the `_lastMdContent` guard when only the styling changed.
+        applyCssFromUrl();
+        // Keep the split/handle in sync with `editorWidth` (and edit mode).
+        applyEditorLayout();
+        runmdFromUrl();
+      }, false);
 
       const metapageDef = {
         metaframes: {
@@ -489,6 +863,10 @@
         document
           .getElementById("editor-root")
           .className = "editor-container-hidden borderDashedBlue";
+        const resizeHandle = document.getElementById("editor-resize-handle");
+        if (resizeHandle) {
+          resizeHandle.style.display = "none";
+        }
       };
 
       const onMenuClick = async () => {
@@ -571,10 +949,15 @@
       const [_, hashParamOnce] = getUrlHashParamsFromHashString(window.location.hash);
       const inEditModeOnce = hashParamOnce["edit"] === "true";
       if (inEditModeOnce) {
-        // if editing, force showing the menu
-        window.addEventListener("load", () => {
+        // if editing, force showing the menu.
+        // Same Safari timing issue as above: "load" may already have fired.
+        if (document.readyState === "complete") {
           onMenuClick();
-        });
+        } else {
+          window.addEventListener("load", () => {
+            onMenuClick();
+          });
+        }
       }
     </script>
   </body>

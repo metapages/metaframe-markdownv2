@@ -1,5 +1,10 @@
 // import Mermaid from 'mermaid';
-import Mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/+esm';
+// Mermaid's own ESM build, NOT jsdelivr's `/+esm` transform (nor esm.sh): those
+// re-bundlers duplicate mermaid's internal config module, so the
+// `securityLevel: "loose"` set below never reaches the flowchart parser and
+// `click X handleClick` directives silently never bind. Keep this URL identical
+// to the one in ../../index.html so both share one module instance.
+import Mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.esm.min.mjs';
 
 const htmlEntities = (str) =>
   String(str)
